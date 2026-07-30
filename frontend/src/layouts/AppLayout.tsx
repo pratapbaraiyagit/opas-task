@@ -19,6 +19,7 @@ import { Avatar, Dropdown } from '@components/ui';
 import { useTheme } from '@contexts/ThemeContext';
 import { cn } from '@utils/index';
 import { WorkspaceSelector } from '../features/workspace/components/WorkspaceSelector';
+import { CreateBoardModal } from '../features/board/components/CreateBoardModal';
 
 interface NavItem {
   label: string;
@@ -35,6 +36,7 @@ const navItems: NavItem[] = [
 
 export const AppLayout: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,6 +69,7 @@ export const AppLayout: React.FC = () => {
         {/* New Board button */}
         <div className="px-3 py-3">
           <button
+            onClick={() => setIsCreateModalOpen(true)}
             className={cn(
               'btn-primary w-full justify-center',
               sidebarCollapsed ? 'px-2' : 'px-4',
@@ -170,11 +173,15 @@ export const AppLayout: React.FC = () => {
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
       </div>
+
+      <CreateBoardModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+      />
     </div>
   );
 };

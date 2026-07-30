@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { EmptyState, Button } from '@components/ui';
 import { useWorkspaceStore } from '@store/workspaceStore';
-import { Plus } from 'lucide-react';
+import { useBoardStore } from '@store/boardStore';
+import { Plus, LayoutGrid } from 'lucide-react';
+import { BoardCard } from '../board/components/BoardCard';
+import { CreateBoardModal } from '../board/components/CreateBoardModal';
 
 export const DashboardPage: React.FC = () => {
-  const { activeWorkspace, isFetching } = useWorkspaceStore();
+  const { activeWorkspace, isFetching: isWorkspaceFetching } = useWorkspaceStore();
+  const { boards, isFetching: isBoardsFetching, fetchWorkspaceBoards } = useBoardStore();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  if (isFetching) {
+  useEffect(() => {
+    if (activeWorkspace) {
+      fetchWorkspaceBoards(activeWorkspace.id);
+    }
+  }, [activeWorkspace, fetchWorkspaceBoards]);
+
+  if (isWorkspaceFetching) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-surface-500">Loading workspace...</p>
@@ -25,8 +36,8 @@ export const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-8">
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
             {activeWorkspace.name}
@@ -35,19 +46,34 @@ export const DashboardPage: React.FC = () => {
             {activeWorkspace.description || 'Welcome to your workspace.'}
           </p>
         </div>
-        <Button leftIcon={<Plus className="w-4 h-4" />}>
+        <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => setIsModalOpen(true)}>
           New Board
         </Button>
       </div>
 
-      <EmptyState
-        title="No boards yet"
-        description="Create your first board to start collaborating."
-        actionLabel="Create Board"
-        onAction={() => {
-          // Placeholder for next phase
-        }}
-      />
+      {isBoardsFetching ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-56 bg-surface-100 dark:bg-surface-800 rounded-xl" />
+          ))}
+        </div>
+      ) : boards.length === 0 ? (
+        <EmptyState
+          title="No boards yet"
+          description="Create your first board to start collaborating."
+          icon={<LayoutGrid className="w-8 h-8 text-surface-400" />}
+          actionLabel="Create Board"
+          onAction={() => setIsModalOpen(true)}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {boards.map((board) => (
+            <BoardCard key={board.id} board={board} />
+          ))}
+        </div>
+      )}
+
+      <CreateBoardModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

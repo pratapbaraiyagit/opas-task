@@ -1,0 +1,166 @@
+import { create } from 'zustand';
+import { Board } from '../types';
+import { boardApi } from '@api/board.api';
+import toast from 'react-hot-toast';
+
+interface BoardState {
+  boards: Board[];
+  starredBoards: Board[];
+  activeBoard: Board | null;
+  isLoading: boolean;
+  isFetching: boolean;
+
+  fetchWorkspaceBoards: (workspaceId: string) => Promise<void>;
+  fetchStarredBoards: () => Promise<void>;
+  fetchBoardById: (id: string) => Promise<void>;
+  createBoard: (workspaceId: string, data: { title: string }) => Promise<Board>;
+  updateBoard: (id: string, data: { title?: string; isPublic?: boolean }) => Promise<void>;
+  deleteBoard: (id: string) => Promise<void>;
+  toggleStar: (id: string) => Promise<void>;
+  setActiveBoard: (board: Board | null) => void;
+}
+
+export const useBoardStore = create<BoardState>((set) => ({
+  boards: [],
+  starredBoards: [],
+  activeBoard: null,
+  isLoading: false,
+  isFetching: false,
+
+  fetchWorkspaceBoards: async (workspaceId: string) => {
+    set({ isFetching: true });
+    try {
+      const boards = await boardApi.getWorkspaceBoards(workspaceId);
+      set({ boards });
+    } catch (error: any) {
+      toast.error('Failed to load boards');
+    } finally {
+      set({ isFetching: false });
+    }
+  },
+
+  fetchStarredBoards: async () => {
+    set({ isFetching: true });
+    try {
+      const starredBoards = await boardApi.getStarredBoards();
+      set({ starredBoards });
+    } catch (error: any) {
+      toast.error('Failed to load starred boards');
+    } finally {
+      set({ isFetching: false });
+    }
+  },
+
+  fetchBoardById: async (id: string) => {
+    set({ isFetching: true });
+    try {
+      const activeBoard = await boardApi.getBoardById(id);
+      set({ activeBoard });
+    } catch (error: any) {
+      toast.error('Failed to load board');
+      throw error;
+    } finally {
+      set({ isFetching: false });
+    }
+  },
+
+  createBoard: async (workspaceId, data) => {
+    set({ isLoading: true });
+    try {
+      const newBoard = await boardApi.createBoard(workspaceId, data);
+      set((state) => ({ boards: [newBoard, ...state.boards] }));
+      toast.success('Board created successfully');
+      return newBoard;
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to create board');
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  updateBoard: async (id, data) => {
+    set({ isLoading: true });
+    try {
+      const updated = await boardApi.updateBoard(id, data);
+      set((state) => ({
+        boards: state.boards.map((b) => (b.id === id ? updated : b)),
+        activeBoard: state.activeBoard?.id === id ? updated : state.activeBoard,
+        starredBoards: state.starredBoards.map((b) => (b.id === id ? updated : b)),
+      }));
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update board');
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  deleteBoard: async (id) => {
+    set({ isLoading: true });
+    try {
+      await boardApi.deleteBoard(id);
+      set((state) => ({
+        boards: state.boards.filter((b) => b.id !== id),
+        starredBoards: state.starredBoards.filter((b) => b.id !== id),
+        activeBoard: state.activeBoard?.id === id ? null : state.activeBoard,
+      }));
+      toast.success('Board deleted successfully');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete board');
+      throw error;
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  toggleStar: async (id) => {
+    try {
+      // Optimistic update
+      const { user } = useAuthStore.getState();
+      if (!user) return;
+      
+      set((state) => {
+        const isStarred = state.boards.find(b => b.id === id)?.starredBy?.includes(user.id);
+        const updateBoards = (boards: Board[]) => boards.map(b => {
+          if (b.id !== id) return b;
+          const starredBy = isStarred 
+            ? b.starredBy.filter(uid => uid !== user.id)
+            : [...(b.starredBy || []), user.id];
+          return { ...b, starredBy };
+        });
+
+        return {
+          boards: updateBoards(state.boards),
+          activeBoard: state.activeBoard?.id === id ? updateBoards([state.activeBoard])[0] : state.activeBoard,
+        };
+      });
+
+      const updated = await boardApi.toggleStar(id);
+      
+      // Update actual state and starredBoards list
+      set((state) => {
+        const isNowStarred = updated.starredBy?.includes(user.id);
+        const newStarredBoards = isNowStarred 
+          ? [...state.starredBoards.filter(b => b.id !== id), updated]
+          : state.starredBoards.filter(b => b.id !== id);
+
+        return {
+          boards: state.boards.map((b) => (b.id === id ? updated : b)),
+          activeBoard: state.activeBoard?.id === id ? updated : state.activeBoard,
+          starredBoards: newStarredBoards,
+        };
+      });
+    } catch (error: any) {
+      toast.error('Failed to update star');
+      // Ideally rollback optimistic update here
+    }
+  },
+
+  setActiveBoard: (board) => {
+    set({ activeBoard: board });
+  },
+}));
+
+// We need to import useAuthStore for optimistic star toggle
+import { useAuthStore } from './authStore';

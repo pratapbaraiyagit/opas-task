@@ -14,6 +14,8 @@ import { DashboardPage } from '@features/workspace/DashboardPage';
 import { MembersPage } from '@features/workspace/MembersPage';
 import { JoinWorkspacePage } from '@features/workspace/JoinWorkspacePage';
 
+import { StarredPage } from '@features/board/StarredPage';
+
 // Placeholder pages — will be replaced with real pages in subsequent phases
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-full">
@@ -45,7 +47,7 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: '/dashboard', element: <DashboardPage /> },
-          { path: '/starred', element: <PlaceholderPage title="Starred Boards" /> },
+          { path: '/starred', element: <StarredPage /> },
           { path: '/members', element: <MembersPage /> },
           { path: '/settings', element: <PlaceholderPage title="Settings" /> },
           { path: '/board/:boardId', element: <PlaceholderPage title="Board Canvas" /> },

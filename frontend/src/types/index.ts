@@ -29,10 +29,12 @@ export interface Board {
   id: string;
   workspaceId: string;
   title: string;
-  starred: boolean;
-  lastOpened: string;
+  starredBy: string[];
+  lastOpenedAt: Record<string, string>;
   thumbnail?: string;
   createdBy: User;
+  isPublic: boolean;
+  publicRole: 'VIEWER' | 'EDITOR';
   createdAt: string;
   updatedAt: string;
 }
