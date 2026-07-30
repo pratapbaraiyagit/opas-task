@@ -11,6 +11,7 @@ import {
   forgotPassword,
   resetPassword,
   getMe,
+  getAnonymousToken,
 } from './auth.controller';
 import {
   signupSchema,
@@ -32,5 +33,6 @@ router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
 
 router.get('/me', authenticate, getMe);
+router.post('/anonymous', getAnonymousToken);
 
 export default router;

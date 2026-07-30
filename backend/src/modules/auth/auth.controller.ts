@@ -210,3 +210,27 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
   const user = await authService.getProfile(req.user!.id);
   res.status(200).json(ApiResponse.success(user));
 });
+
+import { v4 as uuidv4 } from 'uuid';
+import { TokenService } from '@services/token.service';
+const tokenServiceObj = new TokenService();
+
+const ANIMAL_NAMES = ['Fox', 'Bear', 'Rabbit', 'Wolf', 'Eagle', 'Dolphin', 'Tiger', 'Lion', 'Panda', 'Koala', 'Owl'];
+
+export const getAnonymousToken = asyncHandler(async (req: Request, res: Response) => {
+  const randomAnimal = ANIMAL_NAMES[Math.floor(Math.random() * ANIMAL_NAMES.length)];
+  const name = `Anonymous ${randomAnimal}`;
+  const id = uuidv4();
+  
+  const accessToken = tokenServiceObj.generateAccessToken({
+    id,
+    email: 'anonymous@opas.com',
+    name,
+    isAnonymous: true
+  });
+  
+  res.status(200).json(ApiResponse.success({ 
+    accessToken, 
+    user: { id, name, email: 'anonymous@opas.com', isAnonymous: true } 
+  }, 'Anonymous token generated'));
+});

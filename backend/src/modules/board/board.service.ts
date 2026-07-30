@@ -32,23 +32,32 @@ export class BoardService {
     return this.boardRepository.findAllStarredByUser(userId);
   }
 
-  async getBoardById(boardId: string, userId: string): Promise<IBoard> {
+  async getBoardById(boardId: string, userId?: string): Promise<IBoard> {
     const board = await this.boardRepository.findById(boardId);
     if (!board) {
       throw ApiError.notFound('Board not found');
+    }
+
+    if (board.isPublic) {
+      if (userId) {
+        this.boardRepository.updateLastOpened(boardId, userId).catch(console.error);
+      }
+      return board;
+    }
+
+    if (!userId) {
+      throw ApiError.forbidden('You do not have access to this board');
     }
 
     // Check if user has access via workspace
     const workspace = await this.workspaceRepository.findById(board.workspaceId.toString());
     const isMember = workspace?.members.some((m) => m.user._id.toString() === userId);
 
-    if (!isMember && !board.isPublic) {
+    if (!isMember) {
       throw ApiError.forbidden('You do not have access to this board');
     }
 
-    // Update last opened asynchronously
     this.boardRepository.updateLastOpened(boardId, userId).catch(console.error);
-
     return board;
   }
 

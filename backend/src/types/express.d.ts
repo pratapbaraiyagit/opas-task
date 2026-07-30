@@ -8,6 +8,7 @@ declare global {
         email: string;
         name: string;
         role?: string;
+        isAnonymous?: boolean;
       };
       workspaceRole?: 'owner' | 'editor' | 'viewer';
     }
@@ -18,6 +19,7 @@ export interface JwtAccessPayload {
   id: string;
   email: string;
   name: string;
+  isAnonymous?: boolean;
 }
 
 export interface JwtRefreshPayload {

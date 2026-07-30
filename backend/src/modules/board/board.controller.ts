@@ -23,7 +23,7 @@ export const getStarredBoards = asyncHandler(async (req: Request, res: Response)
 });
 
 export const getBoardById = asyncHandler(async (req: Request, res: Response) => {
-  const board = await boardService.getBoardById(req.params.id, req.user!.id);
+  const board = await boardService.getBoardById(req.params.id, req.user?.id);
   res.status(200).json(ApiResponse.success(board));
 });
 

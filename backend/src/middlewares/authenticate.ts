@@ -21,6 +21,16 @@ export const authenticate = async (
     const token = authHeader.split(' ')[1];
     const payload = tokenService.verifyAccessToken(token);
 
+    if (payload.isAnonymous) {
+      req.user = {
+        id: payload.id,
+        email: payload.email,
+        name: payload.name,
+        isAnonymous: true,
+      };
+      return next();
+    }
+
     const user = await authRepository.findById(payload.id);
     if (!user) {
       throw ApiError.unauthorized('User no longer exists');
@@ -39,5 +49,43 @@ export const authenticate = async (
       return;
     }
     next(ApiError.unauthorized('Invalid or expired token'));
+  }
+};
+
+export const optionalAuthenticate = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+    const payload = tokenService.verifyAccessToken(token);
+
+    if (payload.isAnonymous) {
+      req.user = {
+        id: payload.id,
+        email: payload.email,
+        name: payload.name,
+        isAnonymous: true,
+      };
+      return next();
+    }
+
+    const user = await authRepository.findById(payload.id);
+    if (user) {
+      req.user = {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+      };
+    }
+    next();
+  } catch (error) {
+    next();
   }
 };

@@ -12,7 +12,7 @@ interface BoardState {
 
   fetchWorkspaceBoards: (workspaceId: string) => Promise<void>;
   fetchStarredBoards: () => Promise<void>;
-  fetchBoardById: (id: string) => Promise<void>;
+  fetchBoardById: (id: string) => Promise<Board>;
   createBoard: (workspaceId: string, data: { title: string }) => Promise<Board>;
   updateBoard: (id: string, data: { title?: string; isPublic?: boolean }) => Promise<void>;
   deleteBoard: (id: string) => Promise<void>;
@@ -56,6 +56,7 @@ export const useBoardStore = create<BoardState>((set) => ({
     try {
       const activeBoard = await boardApi.getBoardById(id);
       set({ activeBoard });
+      return activeBoard;
     } catch (error: any) {
       toast.error('Failed to load board');
       throw error;

@@ -18,32 +18,48 @@ export const CanvasPage: React.FC = () => {
   const [isNotesOpen, setIsNotesOpen] = useState(false);
 
   useEffect(() => {
+    let socketInstance: any = null;
+
     if (id) {
       setBoardId(id);
-      fetchBoardById(id).catch(err => {
+      fetchBoardById(id).then(async (board) => {
+        let token = localStorage.getItem('accessToken');
+        
+        if (!token && board?.isPublic) {
+          try {
+            const { default: api } = await import('../../../api/client');
+            const res = await api.post('/auth/anonymous');
+            token = res.data.data.accessToken as string;
+            localStorage.setItem('accessToken', token);
+          } catch (err) {
+            console.error('Failed to get anonymous token', err);
+          }
+        }
+        
+        if (token) {
+          socketInstance = initSocket(token);
+          
+          socketInstance.emit('join_board', id);
+
+          socketInstance.on('shape:add', receiveAddShape);
+          socketInstance.on('shape:update', ({ shapeId, attrs }: any) => receiveUpdateShape(shapeId, attrs));
+          socketInstance.on('shape:delete', receiveDeleteShapes);
+        }
+      }).catch(err => {
         setError(err.response?.data?.message || 'Failed to load board');
       });
       
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        const socket = initSocket(token);
-        
-        socket.emit('join_board', id);
-
-        socket.on('shape:add', receiveAddShape);
-        socket.on('shape:update', ({ shapeId, attrs }) => receiveUpdateShape(shapeId, attrs));
-        socket.on('shape:delete', receiveDeleteShapes);
-        
-        return () => {
-          socket.emit('leave_board', id);
-          socket.off('shape:add', receiveAddShape);
-          socket.off('shape:update');
-          socket.off('shape:delete', receiveDeleteShapes);
+      return () => {
+        if (socketInstance) {
+          socketInstance.emit('leave_board', id);
+          socketInstance.off('shape:add', receiveAddShape);
+          socketInstance.off('shape:update');
+          socketInstance.off('shape:delete', receiveDeleteShapes);
           disconnectSocket();
-          setBoardId(null);
-          clearCanvas();
-        };
-      }
+        }
+        setBoardId(null);
+        clearCanvas();
+      };
     }
   }, [id, fetchBoardById, setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, clearCanvas]);
 
@@ -69,7 +85,11 @@ export const CanvasPage: React.FC = () => {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-surface-50 dark:bg-surface-950 flex">
       <div className="relative flex-1 h-full">
-        <CanvasHeader board={activeBoard} onToggleNotes={() => setIsNotesOpen(!isNotesOpen)} />
+        <CanvasHeader 
+          board={activeBoard} 
+          onToggleNotes={() => setIsNotesOpen(!isNotesOpen)} 
+          onUpdateBoard={(board) => useBoardStore.getState().setActiveBoard(board)}
+        />
         <CanvasToolbar />
         <CursorsLayer boardId={activeBoard.id} />
         <BoardCanvas />
