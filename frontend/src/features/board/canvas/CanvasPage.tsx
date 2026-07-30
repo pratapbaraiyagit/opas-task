@@ -5,6 +5,7 @@ import { useCanvasStore } from '../../../store/canvasStore';
 import { CanvasHeader } from './CanvasHeader';
 import { CanvasToolbar } from './CanvasToolbar';
 import { BoardCanvas } from './BoardCanvas';
+import { MeetingNotes } from './MeetingNotes';
 import { Spinner } from '@components/ui';
 import { initSocket, disconnectSocket } from '../../../api/socket';
 
@@ -13,6 +14,7 @@ export const CanvasPage: React.FC = () => {
   const { fetchBoardById, activeBoard, isFetching } = useBoardStore();
   const { setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, clearCanvas } = useCanvasStore();
   const [error, setError] = useState<string | null>(null);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -64,10 +66,18 @@ export const CanvasPage: React.FC = () => {
   }
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-surface-50 dark:bg-surface-950">
-      <CanvasHeader board={activeBoard} />
-      <CanvasToolbar />
-      <BoardCanvas />
+    <div className="relative w-full h-screen overflow-hidden bg-surface-50 dark:bg-surface-950 flex">
+      <div className="relative flex-1 h-full">
+        <CanvasHeader board={activeBoard} onToggleNotes={() => setIsNotesOpen(!isNotesOpen)} />
+        <CanvasToolbar />
+        <BoardCanvas />
+      </div>
+      
+      <MeetingNotes 
+        boardId={activeBoard.id} 
+        isOpen={isNotesOpen} 
+        onClose={() => setIsNotesOpen(false)} 
+      />
     </div>
   );
 };

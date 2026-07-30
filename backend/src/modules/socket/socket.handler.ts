@@ -67,6 +67,11 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
       socket.to(boardId).emit('cursor:move', { userId: socket.data.user.id, ...cursor });
     });
 
+    // Handle Yjs document sync for Meeting Notes (Phase 7)
+    socket.on('yjs:update', ({ boardId, update }) => {
+      socket.to(boardId).emit('yjs:update', update);
+    });
+
     socket.on('disconnect', () => {
       logger.info(`Socket disconnected: ${socket.id}`);
     });

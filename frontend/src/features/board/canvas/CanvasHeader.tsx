@@ -1,14 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Share } from 'lucide-react';
+import { ChevronLeft, Share, FileText } from 'lucide-react';
 import { Board } from '../../../types';
 import { Button } from '@components/ui';
 
 interface CanvasHeaderProps {
   board: Board;
+  onToggleNotes: () => void;
 }
 
-export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board }) => {
+export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes }) => {
   const navigate = useNavigate();
 
   return (
@@ -31,6 +32,10 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board }) => {
             Me
           </div>
         </div>
+        <Button variant="secondary" className="gap-2" onClick={onToggleNotes}>
+          <FileText className="w-4 h-4" />
+          Notes
+        </Button>
         <Button variant="secondary" className="gap-2">
           <Share className="w-4 h-4" />
           Share
