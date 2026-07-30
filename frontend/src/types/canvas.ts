@@ -1,0 +1,20 @@
+export type ShapeType = 'rectangle' | 'ellipse' | 'line' | 'text' | 'sticky';
+
+export interface CanvasShape {
+  id: string;
+  type: ShapeType;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  text?: string;
+  points?: number[];
+  rotation?: number;
+  scaleX?: number;
+  scaleY?: number;
+}
+
+export type ToolType = 'select' | 'hand' | ShapeType;

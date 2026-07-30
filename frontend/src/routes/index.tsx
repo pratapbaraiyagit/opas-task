@@ -16,11 +16,13 @@ import { JoinWorkspacePage } from '@features/workspace/JoinWorkspacePage';
 
 import { StarredPage } from '@features/board/StarredPage';
 
+import { CanvasPage } from '@features/board/canvas/CanvasPage';
+
 // Placeholder pages — will be replaced with real pages in subsequent phases
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-full">
-    <h1 className="text-2xl font-bold text-surface-800 dark:text-surface-200">{title}</h1>
-    <p className="text-surface-500 mt-2">Coming in next phase</p>
+    <h1 className="text-2xl font-semibold text-surface-900 dark:text-white mb-2">{title}</h1>
+    <p className="text-surface-500">Coming in next phase</p>
   </div>
 );
 
@@ -50,7 +52,10 @@ export const router = createBrowserRouter([
           { path: '/starred', element: <StarredPage /> },
           { path: '/members', element: <MembersPage /> },
           { path: '/settings', element: <PlaceholderPage title="Settings" /> },
-          { path: '/board/:boardId', element: <PlaceholderPage title="Board Canvas" /> },
+          {
+            path: 'board/:id',
+            element: <CanvasPage />,
+          },
         ],
       },
     ],
