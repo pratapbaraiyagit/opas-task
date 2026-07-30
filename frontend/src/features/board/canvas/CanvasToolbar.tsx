@@ -6,7 +6,9 @@ import {
   Circle, 
   Minus, 
   Type, 
-  StickyNote
+  StickyNote,
+  Undo,
+  Redo
 } from 'lucide-react';
 import { useCanvasStore } from '../../../store/canvasStore';
 import { ToolType } from '../../../types/canvas';
@@ -42,6 +44,23 @@ export const CanvasToolbar: React.FC = () => {
           <Icon className="w-5 h-5" />
         </button>
       ))}
+      <div className="h-px bg-surface-200 dark:bg-surface-800 my-1 mx-2" />
+      <button
+        onClick={() => useCanvasStore.getState().undo()}
+        title="Undo (Cmd+Z)"
+        disabled={useCanvasStore((state) => state.past.length === 0)}
+        className="p-2.5 rounded-lg transition-colors group relative flex items-center justify-center text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <Undo className="w-5 h-5" />
+      </button>
+      <button
+        onClick={() => useCanvasStore.getState().redo()}
+        title="Redo (Cmd+Shift+Z)"
+        disabled={useCanvasStore((state) => state.future.length === 0)}
+        className="p-2.5 rounded-lg transition-colors group relative flex items-center justify-center text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <Redo className="w-5 h-5" />
+      </button>
     </div>
   );
 };

@@ -20,7 +20,9 @@ export const BoardCanvas: React.FC = () => {
     setCamera,
     selectedShapeIds,
     selectShapes,
-    clearSelection
+    clearSelection,
+    undo,
+    redo
   } = useCanvasStore();
 
   const stageRef = useRef<Konva.Stage>(null);
@@ -63,6 +65,39 @@ export const BoardCanvas: React.FC = () => {
     document.addEventListener('canvas:download', handleDownload);
     return () => document.removeEventListener('canvas:download', handleDownload);
   }, [boardId]);
+
+  // Handle Keyboard Shortcuts (Undo/Redo)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        if (selectedShapeIds.length > 0) {
+          e.preventDefault();
+          useCanvasStore.getState().deleteShapes(selectedShapeIds);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo, selectedShapeIds]);
 
   const getPointerPos = () => {
     const stage = stageRef.current;
