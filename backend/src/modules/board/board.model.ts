@@ -10,6 +10,7 @@ export interface IBoard extends Document {
   lastOpenedAt: Map<string, Date>; // UserID -> Date
   isPublic: boolean;
   publicRole: 'VIEWER' | 'EDITOR';
+  publicExpiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +56,9 @@ const boardSchema = new Schema<IBoard>(
       type: String,
       enum: ['VIEWER', 'EDITOR'],
       default: 'VIEWER',
+    },
+    publicExpiresAt: {
+      type: Date,
     },
   },
   {

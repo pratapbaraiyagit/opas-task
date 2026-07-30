@@ -54,7 +54,7 @@ export const boardApi = {
   },
 
   toggleStar: async (id: string): Promise<Board> => {
-    const response = await apiClient.post<ApiResponse<Board>>(`/boards/${id}/star`);
+    const response = await apiClient.put<ApiResponse<Board>>(`/boards/${id}/star`);
     return response.data.data!;
   },
 };

@@ -44,10 +44,13 @@ export class BoardService {
     }
 
     if (board.isPublic) {
-      if (userId) {
-        this.boardRepository.updateLastOpened(boardId, userId).catch(console.error);
+      const isExpired = board.publicExpiresAt && new Date(board.publicExpiresAt).getTime() < Date.now();
+      if (!isExpired) {
+        if (userId) {
+          this.boardRepository.updateLastOpened(boardId, userId).catch(console.error);
+        }
+        return board;
       }
-      return board;
     }
 
     if (!userId) {

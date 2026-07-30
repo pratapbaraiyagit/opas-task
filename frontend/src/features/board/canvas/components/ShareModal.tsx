@@ -29,18 +29,39 @@ export const ShareModal: React.FC<ShareModalProps> = ({ board, isOpen, onClose, 
     }
   };
 
-  const handleTogglePublic = async () => {
+  const updateShareSettings = async (updates: Partial<Board>) => {
     setIsLoading(true);
     try {
-      const response = await api.patch(`/boards/${board.id}/share`, {
-        isPublic: !board.isPublic
-      });
+      const response = await api.patch(`/boards/${board.id}/share`, updates);
       onUpdate(response.data.data);
     } catch (err) {
       console.error('Failed to update share settings', err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTogglePublic = () => {
+    updateShareSettings({ isPublic: !board.isPublic });
+  };
+
+  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    updateShareSettings({ publicRole: e.target.value as 'VIEWER' | 'EDITOR' });
+  };
+
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    let expiresAt: string | null = null;
+    
+    if (value !== 'never') {
+      const date = new Date();
+      if (value === '1h') date.setHours(date.getHours() + 1);
+      if (value === '1d') date.setDate(date.getDate() + 1);
+      if (value === '7d') date.setDate(date.getDate() + 7);
+      expiresAt = date.toISOString();
+    }
+    
+    updateShareSettings({ publicExpiresAt: expiresAt as any });
   };
 
   return (
@@ -77,28 +98,62 @@ export const ShareModal: React.FC<ShareModalProps> = ({ board, isOpen, onClose, 
               </div>
               <p className="text-sm text-surface-500 dark:text-surface-400">
                 {board.isPublic 
-                  ? "Anyone with the link can view and edit this board."
+                  ? "Anyone with the link can access this board."
                   : "Only workspace members can access this board."}
               </p>
             </div>
           </div>
 
           {board.isPublic && (
-            <div className="animate-in slide-in-from-top-2 fade-in duration-300">
-              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5">
-                Copy Link
-              </label>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="text" 
-                  readOnly 
-                  value={publicLink}
-                  className="flex-1 bg-surface-50 dark:bg-surface-950 border border-surface-200 dark:border-surface-800 rounded-lg px-3 py-2 text-sm text-surface-700 dark:text-surface-300 focus:outline-none"
-                />
-                <Button variant="secondary" onClick={handleCopy} className="gap-2 flex-shrink-0">
-                  {isCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                  {isCopied ? 'Copied' : 'Copy'}
-                </Button>
+            <div className="animate-in slide-in-from-top-2 fade-in duration-300 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5">
+                    Role (View-only token)
+                  </label>
+                  <select
+                    value={board.publicRole || 'VIEWER'}
+                    onChange={handleRoleChange}
+                    disabled={isLoading}
+                    className="w-full bg-surface-50 dark:bg-surface-950 border border-surface-200 dark:border-surface-800 rounded-lg px-3 py-2 text-sm text-surface-700 dark:text-surface-300 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                  >
+                    <option value="VIEWER">Viewer</option>
+                    <option value="EDITOR">Editor</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5">
+                    Link Expiry
+                  </label>
+                  <select
+                    onChange={handleExpiryChange}
+                    disabled={isLoading}
+                    className="w-full bg-surface-50 dark:bg-surface-950 border border-surface-200 dark:border-surface-800 rounded-lg px-3 py-2 text-sm text-surface-700 dark:text-surface-300 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                  >
+                    <option value="never">Never expire</option>
+                    <option value="1h">1 Hour</option>
+                    <option value="1d">1 Day</option>
+                    <option value="7d">7 Days</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5">
+                  Copy Link
+                </label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={publicLink}
+                    className="flex-1 bg-surface-50 dark:bg-surface-950 border border-surface-200 dark:border-surface-800 rounded-lg px-3 py-2 text-sm text-surface-700 dark:text-surface-300 focus:outline-none"
+                  />
+                  <Button variant="secondary" onClick={handleCopy} className="gap-2 flex-shrink-0">
+                    {isCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                    {isCopied ? 'Copied' : 'Copy'}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -108,3 +163,4 @@ export const ShareModal: React.FC<ShareModalProps> = ({ board, isOpen, onClose, 
     </div>
   );
 };
+

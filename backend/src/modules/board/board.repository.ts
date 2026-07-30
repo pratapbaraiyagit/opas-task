@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { Board, IBoard } from './board.model';
 import { BoardVersion, IBoardVersion } from './board-version.model';
 import { CreateBoardDto } from './board.dto';
+import { User } from '../auth/auth.model';
 
 export class BoardRepository {
   async create(userId: string, data: CreateBoardDto): Promise<IBoard> {
@@ -21,7 +22,15 @@ export class BoardRepository {
   async findAllByWorkspace(workspaceId: string, search?: string): Promise<IBoard[]> {
     const query: any = { workspaceId: new Types.ObjectId(workspaceId) };
     if (search) {
-      query.title = { $regex: search, $options: 'i' };
+      const matchingUsers = await User.find({
+        $or: [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }]
+      }).select('_id');
+      const userIds = matchingUsers.map(u => u._id);
+
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { createdBy: { $in: userIds } }
+      ];
     }
     return Board.find(query)
       .populate('createdBy', 'name email avatar')
@@ -31,7 +40,15 @@ export class BoardRepository {
   async findAllStarredByUser(userId: string, search?: string): Promise<IBoard[]> {
     const query: any = { starredBy: new Types.ObjectId(userId) };
     if (search) {
-      query.title = { $regex: search, $options: 'i' };
+      const matchingUsers = await User.find({
+        $or: [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }]
+      }).select('_id');
+      const userIds = matchingUsers.map(u => u._id);
+
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { createdBy: { $in: userIds } }
+      ];
     }
     return Board.find(query)
       .populate('createdBy', 'name email avatar')
