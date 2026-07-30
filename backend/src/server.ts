@@ -9,8 +9,8 @@ import app from './app';
 const server = http.createServer(app);
 
 // ─── Socket.IO will be attached here in Phase 6 ─────────────────────────────
-// import { initializeSocket } from '@modules/socket/socket.handler';
-// initializeSocket(server);
+import { initializeSocket } from './modules/socket/socket.handler';
+initializeSocket(server);
 
 const startServer = async (): Promise<void> => {
   try {

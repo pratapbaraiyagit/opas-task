@@ -1,23 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useBoardStore } from '../../../store/boardStore';
+import { useCanvasStore } from '../../../store/canvasStore';
 import { CanvasHeader } from './CanvasHeader';
 import { CanvasToolbar } from './CanvasToolbar';
 import { BoardCanvas } from './BoardCanvas';
 import { Spinner } from '@components/ui';
+import { initSocket, disconnectSocket } from '../../../api/socket';
 
 export const CanvasPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { fetchBoardById, activeBoard, isFetching } = useBoardStore();
+  const { setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, clearCanvas } = useCanvasStore();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
+      setBoardId(id);
       fetchBoardById(id).catch(err => {
         setError(err.response?.data?.message || 'Failed to load board');
       });
+      
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        const socket = initSocket(token);
+        
+        socket.emit('join_board', id);
+
+        socket.on('shape:add', receiveAddShape);
+        socket.on('shape:update', ({ shapeId, attrs }) => receiveUpdateShape(shapeId, attrs));
+        socket.on('shape:delete', receiveDeleteShapes);
+        
+        return () => {
+          socket.emit('leave_board', id);
+          socket.off('shape:add', receiveAddShape);
+          socket.off('shape:update');
+          socket.off('shape:delete', receiveDeleteShapes);
+          disconnectSocket();
+          setBoardId(null);
+          clearCanvas();
+        };
+      }
     }
-  }, [id, fetchBoardById]);
+  }, [id, fetchBoardById, setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, clearCanvas]);
 
   if (error) {
     return (
