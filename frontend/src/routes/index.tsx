@@ -4,6 +4,13 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AuthLayout } from '@layouts/AuthLayout';
 import { AppLayout } from '@layouts/AppLayout';
 
+import { ProtectedRoute } from './ProtectedRoute';
+import { LoginPage } from '@features/auth/LoginPage';
+import { SignupPage } from '@features/auth/SignupPage';
+import { ForgotPasswordPage } from '@features/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from '@features/auth/ResetPasswordPage';
+import { VerifyEmailPage } from '@features/auth/VerifyEmailPage';
+
 // Placeholder pages — will be replaced with real pages in subsequent phases
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-full">
@@ -12,8 +19,6 @@ const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
   </div>
 );
 
-const LoginPage = () => <PlaceholderPage title="Login" />;
-const SignupPage = () => <PlaceholderPage title="Sign Up" />;
 const DashboardPage = () => <PlaceholderPage title="Dashboard" />;
 
 export const router = createBrowserRouter([
@@ -26,19 +31,24 @@ export const router = createBrowserRouter([
     children: [
       { path: '/login', element: <LoginPage /> },
       { path: '/signup', element: <SignupPage /> },
-      { path: '/forgot-password', element: <PlaceholderPage title="Forgot Password" /> },
-      { path: '/reset-password/:token', element: <PlaceholderPage title="Reset Password" /> },
-      { path: '/verify-email/:token', element: <PlaceholderPage title="Verify Email" /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password/:token', element: <ResetPasswordPage /> },
+      { path: '/verify-email/:token', element: <VerifyEmailPage /> },
     ],
   },
   {
-    element: <AppLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/starred', element: <PlaceholderPage title="Starred Boards" /> },
-      { path: '/members', element: <PlaceholderPage title="Team Members" /> },
-      { path: '/settings', element: <PlaceholderPage title="Settings" /> },
-      { path: '/board/:boardId', element: <PlaceholderPage title="Board Canvas" /> },
+      {
+        element: <AppLayout />,
+        children: [
+          { path: '/dashboard', element: <DashboardPage /> },
+          { path: '/starred', element: <PlaceholderPage title="Starred Boards" /> },
+          { path: '/members', element: <PlaceholderPage title="Team Members" /> },
+          { path: '/settings', element: <PlaceholderPage title="Settings" /> },
+          { path: '/board/:boardId', element: <PlaceholderPage title="Board Canvas" /> },
+        ],
+      },
     ],
   },
 ]);

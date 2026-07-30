@@ -1,5 +1,7 @@
 import { Router } from 'express';
 
+import authRoutes from '@modules/auth/auth.routes';
+
 const router = Router();
 
 /**
@@ -15,7 +17,7 @@ router.get('/health', (_req, res) => {
 });
 
 // Module routes will be registered here in subsequent phases
-// router.use('/auth', authRoutes);
+router.use('/auth', authRoutes);
 // router.use('/workspaces', workspaceRoutes);
 // router.use('/boards', boardRoutes);
 // router.use('/notes', notesRoutes);
