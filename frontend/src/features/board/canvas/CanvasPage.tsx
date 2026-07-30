@@ -6,6 +6,7 @@ import { CanvasHeader } from './CanvasHeader';
 import { CanvasToolbar } from './CanvasToolbar';
 import { BoardCanvas } from './BoardCanvas';
 import { MeetingNotes } from './MeetingNotes';
+import { CursorsLayer } from './components/CursorsLayer';
 import { Spinner } from '@components/ui';
 import { initSocket, disconnectSocket } from '../../../api/socket';
 
@@ -70,6 +71,7 @@ export const CanvasPage: React.FC = () => {
       <div className="relative flex-1 h-full">
         <CanvasHeader board={activeBoard} onToggleNotes={() => setIsNotesOpen(!isNotesOpen)} />
         <CanvasToolbar />
+        <CursorsLayer boardId={activeBoard.id} />
         <BoardCanvas />
       </div>
       

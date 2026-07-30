@@ -6,8 +6,11 @@ import Konva from 'konva';
 import { useCanvasStore } from '../../../store/canvasStore';
 import { CanvasShape } from '../../../types/canvas';
 
+import { getSocket } from '../../../api/socket';
+
 export const BoardCanvas: React.FC = () => {
   const { 
+    boardId,
     shapes, 
     addShape, 
     updateShape, 
@@ -86,10 +89,22 @@ export const BoardCanvas: React.FC = () => {
     setCurrentShape(newShape);
   };
 
-  const handlePointerMove = () => {
-    if (!isDrawing || !currentShape) return;
+  const lastEmitRef = useRef<number>(0);
 
+  const handlePointerMove = () => {
     const pos = getPointerPos();
+
+    // Broadcast cursor position (throttle to ~20fps to prevent flooding)
+    const socket = getSocket();
+    if (socket) {
+      const now = Date.now();
+      if (now - lastEmitRef.current > 50) {
+        socket.emit('cursor:move', { boardId, cursor: pos });
+        lastEmitRef.current = now;
+      }
+    }
+
+    if (!isDrawing || !currentShape) return;
 
     if (currentShape.type === 'line') {
       setCurrentShape({

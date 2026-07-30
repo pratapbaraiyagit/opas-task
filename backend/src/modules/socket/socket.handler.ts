@@ -7,6 +7,7 @@ import { logger } from '@utils/logger';
 interface JwtPayload {
   id: string;
   email: string;
+  name: string;
 }
 
 export const initializeSocket = (httpServer: HttpServer): Server => {
@@ -64,7 +65,11 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
 
     // Handle cursor movement (for Phase 8)
     socket.on('cursor:move', ({ boardId, cursor }) => {
-      socket.to(boardId).emit('cursor:move', { userId: socket.data.user.id, ...cursor });
+      socket.to(boardId).emit('cursor:move', { 
+        userId: socket.data.user.id, 
+        userName: socket.data.user.name,
+        ...cursor 
+      });
     });
 
     // Handle Yjs document sync for Meeting Notes (Phase 7)
