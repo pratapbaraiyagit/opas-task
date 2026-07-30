@@ -1,4 +1,4 @@
-export type ShapeType = 'rectangle' | 'ellipse' | 'line' | 'text' | 'sticky';
+export type ShapeType = 'rectangle' | 'ellipse' | 'line' | 'text' | 'sticky' | 'image';
 
 export interface CanvasShape {
   id: string;
@@ -11,6 +11,7 @@ export interface CanvasShape {
   stroke?: string;
   strokeWidth?: number;
   text?: string;
+  src?: string;
   points?: number[];
   rotation?: number;
   scaleX?: number;

@@ -17,6 +17,7 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
       methods: ['GET', 'POST'],
       credentials: true,
     },
+    maxHttpBufferSize: 1e7, // 10 MB limit for images
   });
 
   // Authentication Middleware

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Share, FileText } from 'lucide-react';
+import { ChevronLeft, Share, FileText, Download } from 'lucide-react';
 import { Board } from '../../../types';
 import { Button } from '@components/ui';
 
@@ -35,6 +35,10 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes
         <Button variant="secondary" className="gap-2" onClick={onToggleNotes}>
           <FileText className="w-4 h-4" />
           Notes
+        </Button>
+        <Button variant="secondary" className="gap-2" onClick={() => document.dispatchEvent(new CustomEvent('canvas:download'))}>
+          <Download className="w-4 h-4" />
+          Export
         </Button>
         <Button variant="secondary" className="gap-2">
           <Share className="w-4 h-4" />

@@ -7,6 +7,7 @@ import { useCanvasStore } from '../../../store/canvasStore';
 import { CanvasShape } from '../../../types/canvas';
 
 import { getSocket } from '../../../api/socket';
+import { URLImage } from './components/URLImage';
 
 export const BoardCanvas: React.FC = () => {
   const { 
@@ -45,6 +46,23 @@ export const BoardCanvas: React.FC = () => {
     transformerRef.current.nodes(nodes);
     transformerRef.current.getLayer()?.batchDraw();
   }, [selectedShapeIds, shapes]);
+
+  // Handle Download Custom Event
+  useEffect(() => {
+    const handleDownload = () => {
+      if (!stageRef.current) return;
+      const uri = stageRef.current.toDataURL({ pixelRatio: 2 });
+      const link = document.createElement('a');
+      link.download = `board-${boardId}.png`;
+      link.href = uri;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    document.addEventListener('canvas:download', handleDownload);
+    return () => document.removeEventListener('canvas:download', handleDownload);
+  }, [boardId]);
 
   const getPointerPos = () => {
     const stage = stageRef.current;
@@ -179,6 +197,49 @@ export const BoardCanvas: React.FC = () => {
     });
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!stageRef.current) return;
+    stageRef.current.setPointersPositions(e);
+
+    const pos = getPointerPos();
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const src = event.target?.result as string;
+
+      // Load image natively to get natural dimensions
+      const img = new Image();
+      img.onload = () => {
+        // Calculate dimensions to fit nicely within a reasonable size
+        const MAX_DIM = 400;
+        let w = img.width;
+        let h = img.height;
+        if (w > MAX_DIM || h > MAX_DIM) {
+          const ratio = Math.min(MAX_DIM / w, MAX_DIM / h);
+          w = w * ratio;
+          h = h * ratio;
+        }
+
+        const newShape: CanvasShape = {
+          id: uuidv4(),
+          type: 'image',
+          x: pos.x,
+          y: pos.y,
+          width: w,
+          height: h,
+          src: src,
+        };
+        addShape(newShape);
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const renderShape = (shape: CanvasShape) => {
     const commonProps = {
       id: shape.id,
@@ -240,13 +301,19 @@ export const BoardCanvas: React.FC = () => {
         );
       case 'text':
         return <Text key={shape.id} {...commonProps} text={shape.text} fontSize={24} fill="#1f2937" />;
+      case 'image':
+        return <URLImage key={shape.id} {...commonProps} src={shape.src!} />;
       default:
         return null;
     }
   };
 
   return (
-    <div className="w-full h-full bg-surface-50 dark:bg-surface-950 overflow-hidden outline-none cursor-crosshair">
+    <div 
+      className="w-full h-full bg-surface-50 dark:bg-surface-950 overflow-hidden outline-none cursor-crosshair"
+      onDrop={handleDrop}
+      onDragOver={(e) => e.preventDefault()}
+    >
       <Stage
         ref={stageRef}
         width={window.innerWidth}
