@@ -10,6 +10,9 @@ import { SignupPage } from '@features/auth/SignupPage';
 import { ForgotPasswordPage } from '@features/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '@features/auth/ResetPasswordPage';
 import { VerifyEmailPage } from '@features/auth/VerifyEmailPage';
+import { DashboardPage } from '@features/workspace/DashboardPage';
+import { MembersPage } from '@features/workspace/MembersPage';
+import { JoinWorkspacePage } from '@features/workspace/JoinWorkspacePage';
 
 // Placeholder pages — will be replaced with real pages in subsequent phases
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
@@ -18,8 +21,6 @@ const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
     <p className="text-surface-500 mt-2">Coming in next phase</p>
   </div>
 );
-
-const DashboardPage = () => <PlaceholderPage title="Dashboard" />;
 
 export const router = createBrowserRouter([
   {
@@ -39,12 +40,13 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      { path: '/join/:inviteCode', element: <JoinWorkspacePage /> },
       {
         element: <AppLayout />,
         children: [
           { path: '/dashboard', element: <DashboardPage /> },
           { path: '/starred', element: <PlaceholderPage title="Starred Boards" /> },
-          { path: '/members', element: <PlaceholderPage title="Team Members" /> },
+          { path: '/members', element: <MembersPage /> },
           { path: '/settings', element: <PlaceholderPage title="Settings" /> },
           { path: '/board/:boardId', element: <PlaceholderPage title="Board Canvas" /> },
         ],

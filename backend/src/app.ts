@@ -51,7 +51,7 @@ app.use(cookieParser());
 // ─── API Documentation ──────────────────────────────────────────────────────
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'OPAS API Documentation',
+  customSiteTitle: 'Opash Software task API Documentation',
 }));
 
 app.get('/api-docs.json', (_req, res) => {

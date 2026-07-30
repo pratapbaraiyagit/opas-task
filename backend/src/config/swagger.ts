@@ -6,12 +6,12 @@ const swaggerDefinition: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'OPAS - Collaborative Whiteboard & Meeting Notes API',
+      title: 'Opash Software task - Collaborative Whiteboard & Meeting Notes API',
       version: '1.0.0',
       description:
         'Production-ready REST API for the Collaborative Real-Time Whiteboard & Meeting Notes Platform',
       contact: {
-        name: 'OPAS Team',
+        name: 'Opash Software task Team',
       },
     },
     servers: [

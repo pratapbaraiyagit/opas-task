@@ -22,7 +22,7 @@ export const AuthLayout: React.FC = () => {
                   <path d="M8 12h8M12 8v8" />
                 </svg>
               </div>
-              <span className="text-2xl font-bold text-white">OPAS</span>
+              <span className="text-2xl font-bold text-white">Opash Software task</span>
             </div>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
               Collaborate in
@@ -47,7 +47,7 @@ export const AuthLayout: React.FC = () => {
                 </div>
               ))}
             </div>
-            <p className="text-sm text-white/60">Join 10,000+ teams already using OPAS</p>
+            <p className="text-sm text-white/60">Join 10,000+ teams already using Opash Software task</p>
           </div>
         </div>
       </div>

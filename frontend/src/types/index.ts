@@ -9,9 +9,11 @@ export interface User {
 
 export interface Workspace {
   id: string;
-  title: string;
-  owner: User;
+  name: string;
+  description?: string;
+  owner: string;
   members: WorkspaceMember[];
+  inviteCode: string;
   createdAt: string;
   updatedAt: string;
 }

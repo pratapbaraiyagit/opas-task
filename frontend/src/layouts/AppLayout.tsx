@@ -13,12 +13,12 @@ import {
   Bell,
   Search,
   Plus,
-  ChevronsUpDown,
 } from 'lucide-react';
 
 import { Avatar, Dropdown } from '@components/ui';
 import { useTheme } from '@contexts/ThemeContext';
 import { cn } from '@utils/index';
+import { WorkspaceSelector } from '../features/workspace/components/WorkspaceSelector';
 
 interface NavItem {
   label: string;
@@ -55,17 +55,11 @@ export const AppLayout: React.FC = () => {
       >
         {/* Workspace switcher */}
         <div className="flex items-center gap-3 px-4 h-14 border-b border-surface-200 dark:border-surface-800">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-purple flex items-center justify-center shrink-0">
-            <span className="text-white text-sm font-bold">O</span>
-          </div>
-          {!sidebarCollapsed && (
-            <div className="flex-1 min-w-0">
-              <button className="flex items-center gap-1 w-full text-left group">
-                <span className="text-sm font-semibold text-surface-900 dark:text-surface-100 truncate">
-                  My Workspace
-                </span>
-                <ChevronsUpDown className="w-3.5 h-3.5 text-surface-400 group-hover:text-surface-600 shrink-0" />
-              </button>
+          {!sidebarCollapsed ? (
+            <WorkspaceSelector />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-purple flex items-center justify-center shrink-0 mx-auto">
+              <span className="text-white text-sm font-bold">W</span>
             </div>
           )}
         </div>

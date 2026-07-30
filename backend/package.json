@@ -1,5 +1,5 @@
 {
-  "name": "opas-backend",
+  "name": "opash-software-task-backend",
   "version": "1.0.0",
   "description": "Collaborative Real-Time Whiteboard & Meeting Notes Platform - Backend",
   "main": "dist/server.js",

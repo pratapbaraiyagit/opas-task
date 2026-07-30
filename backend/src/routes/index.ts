@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import authRoutes from '@modules/auth/auth.routes';
+import workspaceRoutes from '@modules/workspace/workspace.routes';
 
 const router = Router();
 
@@ -10,7 +11,7 @@ const router = Router();
 router.get('/health', (_req, res) => {
   res.status(200).json({
     success: true,
-    message: 'OPAS API is running',
+    message: 'Opash Software task API is running',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
@@ -18,7 +19,7 @@ router.get('/health', (_req, res) => {
 
 // Module routes will be registered here in subsequent phases
 router.use('/auth', authRoutes);
-// router.use('/workspaces', workspaceRoutes);
+router.use('/workspaces', workspaceRoutes);
 // router.use('/boards', boardRoutes);
 // router.use('/notes', notesRoutes);
 // router.use('/exports', exportRoutes);

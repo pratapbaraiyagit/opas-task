@@ -23,7 +23,7 @@ const envSchema = z.object({
   SMTP_PORT: z.coerce.number().default(587),
   SMTP_USER: z.string().optional().default(''),
   SMTP_PASS: z.string().optional().default(''),
-  EMAIL_FROM: z.string().default('noreply@opas.io'),
+  EMAIL_FROM: z.string().default('noreply@opash-software-task.io'),
 
   SHARE_LINK_SECRET: z.string().min(16).default('default-share-secret-key-change-me'),
 });

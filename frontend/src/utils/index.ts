@@ -36,7 +36,8 @@ export function formatRelativeTime(date: string | Date): string {
   return formatDate(date);
 }
 
-export function generateColor(seed: string): string {
+export function generateColor(seed?: string): string {
+  if (!seed) return 'hsl(200, 70%, 50%)';
   const colors = [
     '#5c7cfa', '#7c3aed', '#ec4899', '#f97316',
     '#14b8a6', '#10b981', '#ef4444', '#06b6d4',

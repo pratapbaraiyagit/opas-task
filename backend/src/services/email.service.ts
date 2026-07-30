@@ -61,10 +61,10 @@ class EmailService {
       </head>
       <body>
         <div class="container">
-          <div class="header"><h1>OPAS</h1></div>
+          <div class="header"><h1>Opash Software task</h1></div>
           <div class="body">
             <h2>Welcome, ${name}! 👋</h2>
-            <p>Thanks for signing up. Please verify your email address to get started with OPAS.</p>
+            <p>Thanks for signing up. Please verify your email address to get started with Opash Software task.</p>
             <p style="text-align: center;">
               <a href="${verificationUrl}" class="btn">Verify Email Address</a>
             </p>
@@ -72,7 +72,7 @@ class EmailService {
               This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.
             </p>
           </div>
-          <div class="footer"><p>© ${new Date().getFullYear()} OPAS. All rights reserved.</p></div>
+          <div class="footer"><p>© ${new Date().getFullYear()} Opash Software task. All rights reserved.</p></div>
         </div>
       </body>
       </html>
@@ -81,9 +81,9 @@ class EmailService {
     try {
       const transporter = await this.getTransporter();
       const info = await transporter.sendMail({
-        from: `"OPAS" <${env.EMAIL_FROM}>`,
+        from: `"Opash Software task" <${env.EMAIL_FROM}>`,
         to,
-        subject: 'Verify your email — OPAS',
+        subject: 'Verify your email — Opash Software task',
         html,
       });
 
@@ -119,7 +119,7 @@ class EmailService {
       </head>
       <body>
         <div class="container">
-          <div class="header"><h1>OPAS</h1></div>
+          <div class="header"><h1>Opash Software task</h1></div>
           <div class="body">
             <h2>Password Reset Request</h2>
             <p>Hi ${name}, we received a request to reset your password. Click the button below to choose a new password.</p>
@@ -130,7 +130,7 @@ class EmailService {
               This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.
             </p>
           </div>
-          <div class="footer"><p>© ${new Date().getFullYear()} OPAS. All rights reserved.</p></div>
+          <div class="footer"><p>© ${new Date().getFullYear()} Opash Software task. All rights reserved.</p></div>
         </div>
       </body>
       </html>
@@ -139,9 +139,9 @@ class EmailService {
     try {
       const transporter = await this.getTransporter();
       const info = await transporter.sendMail({
-        from: `"OPAS" <${env.EMAIL_FROM}>`,
+        from: `"Opash Software task" <${env.EMAIL_FROM}>`,
         to,
-        subject: 'Reset your password — OPAS',
+        subject: 'Reset your password — Opash Software task',
         html,
       });
 

@@ -52,7 +52,7 @@ export const VerifyEmailPage: React.FC = () => {
           </div>
           <h2 className="text-3xl font-bold text-surface-900 dark:text-white mb-4">Email Verified!</h2>
           <p className="text-surface-600 dark:text-surface-400 mb-8 max-w-sm">
-            {message} You can now access all features of OPAS.
+            {message} You can now access all features of Opash Software task.
           </p>
           <Link to="/login" className="w-full max-w-xs">
             <Button className="w-full">Continue to Login</Button>
