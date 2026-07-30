@@ -3,6 +3,7 @@ import { WorkspaceRepository } from '@modules/workspace/workspace.repository';
 import { BoardRepository } from './board.repository';
 import { CreateBoardDto, UpdateBoardDto } from './board.dto';
 import { IBoard } from './board.model';
+import { IBoardVersion } from './board-version.model';
 
 export class BoardService {
   private boardRepository: BoardRepository;
@@ -24,12 +25,16 @@ export class BoardService {
     return this.boardRepository.create(userId, data);
   }
 
-  async getWorkspaceBoards(workspaceId: string): Promise<IBoard[]> {
-    return this.boardRepository.findAllByWorkspace(workspaceId);
+  async getWorkspaceBoards(workspaceId: string, search?: string): Promise<IBoard[]> {
+    return this.boardRepository.findAllByWorkspace(workspaceId, search);
   }
 
-  async getStarredBoards(userId: string): Promise<IBoard[]> {
-    return this.boardRepository.findAllStarredByUser(userId);
+  async getStarredBoards(userId: string, search?: string): Promise<IBoard[]> {
+    return this.boardRepository.findAllStarredByUser(userId, search);
+  }
+
+  async getRecentBoards(userId: string): Promise<IBoard[]> {
+    return this.boardRepository.findRecentBoards(userId);
   }
 
   async getBoardById(boardId: string, userId?: string): Promise<IBoard> {
@@ -90,5 +95,29 @@ export class BoardService {
     }
     
     return updatedBoard;
+  }
+
+  async saveVersion(boardId: string, userId: string, versionName: string, shapes: any[]): Promise<IBoardVersion> {
+    const board = await this.boardRepository.findById(boardId);
+    if (!board) {
+      throw ApiError.notFound('Board not found');
+    }
+    // Access control: only EDITOR or owner/member
+    return this.boardRepository.saveVersion(boardId, userId, versionName, shapes);
+  }
+
+  async getVersions(boardId: string): Promise<IBoardVersion[]> {
+    return this.boardRepository.getVersions(boardId);
+  }
+
+  async restoreVersion(boardId: string, versionId: string): Promise<IBoardVersion> {
+    const version = await this.boardRepository.getVersionById(versionId);
+    if (!version) {
+      throw ApiError.notFound('Version not found');
+    }
+    if (version.boardId.toString() !== boardId) {
+      throw ApiError.badRequest('Version does not belong to this board');
+    }
+    return version;
   }
 }

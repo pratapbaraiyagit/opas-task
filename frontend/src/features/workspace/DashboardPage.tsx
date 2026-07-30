@@ -6,16 +6,24 @@ import { Plus, LayoutGrid } from 'lucide-react';
 import { BoardCard } from '../board/components/BoardCard';
 import { CreateBoardModal } from '../board/components/CreateBoardModal';
 
+import { useSearchParams } from 'react-router-dom';
+
 export const DashboardPage: React.FC = () => {
   const { activeWorkspace, isFetching: isWorkspaceFetching } = useWorkspaceStore();
-  const { boards, isFetching: isBoardsFetching, fetchWorkspaceBoards } = useBoardStore();
+  const { boards, recentBoards, isFetching: isBoardsFetching, fetchWorkspaceBoards, fetchRecentBoards } = useBoardStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get('search') || '';
 
   useEffect(() => {
     if (activeWorkspace) {
-      fetchWorkspaceBoards(activeWorkspace.id);
+      fetchWorkspaceBoards(activeWorkspace.id, search);
     }
-  }, [activeWorkspace, fetchWorkspaceBoards]);
+  }, [activeWorkspace, fetchWorkspaceBoards, search]);
+
+  useEffect(() => {
+    fetchRecentBoards();
+  }, [fetchRecentBoards]);
 
   if (isWorkspaceFetching) {
     return (
@@ -51,12 +59,29 @@ export const DashboardPage: React.FC = () => {
         </Button>
       </div>
 
-      {isBoardsFetching ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-56 bg-surface-100 dark:bg-surface-800 rounded-xl" />
-          ))}
+      {recentBoards.length > 0 && !search && (
+        <div className="mb-12">
+          <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">
+            Recently Viewed
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {recentBoards.map((board) => (
+              <BoardCard key={board.id} board={board} />
+            ))}
+          </div>
         </div>
+      )}
+
+      <div>
+        <h2 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">
+          All Workspace Boards
+        </h2>
+        {isBoardsFetching ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-56 bg-surface-100 dark:bg-surface-800 rounded-xl" />
+            ))}
+          </div>
       ) : boards.length === 0 ? (
         <EmptyState
           title="No boards yet"
@@ -72,6 +97,7 @@ export const DashboardPage: React.FC = () => {
           ))}
         </div>
       )}
+      </div>
 
       <CreateBoardModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>

@@ -13,12 +13,19 @@ export const createBoard = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getWorkspaceBoards = asyncHandler(async (req: Request, res: Response) => {
-  const boards = await boardService.getWorkspaceBoards(req.params.id);
+  const search = req.query.search as string;
+  const boards = await boardService.getWorkspaceBoards(req.params.id, search);
   res.status(200).json(ApiResponse.success(boards));
 });
 
 export const getStarredBoards = asyncHandler(async (req: Request, res: Response) => {
-  const boards = await boardService.getStarredBoards(req.user!.id);
+  const search = req.query.search as string;
+  const boards = await boardService.getStarredBoards(req.user!.id, search);
+  res.status(200).json(ApiResponse.success(boards));
+});
+
+export const getRecentBoards = asyncHandler(async (req: Request, res: Response) => {
+  const boards = await boardService.getRecentBoards(req.user!.id);
   res.status(200).json(ApiResponse.success(boards));
 });
 
@@ -39,5 +46,25 @@ export const deleteBoard = asyncHandler(async (req: Request, res: Response) => {
 
 export const toggleStar = asyncHandler(async (req: Request, res: Response) => {
   const board = await boardService.toggleStar(req.params.id, req.user!.id);
-  res.status(200).json(ApiResponse.success(board, 'Board star updated'));
+  res.status(200).json(ApiResponse.success(board));
+});
+
+export const saveVersion = asyncHandler(async (req: Request, res: Response) => {
+  const { versionName, shapes } = req.body;
+  if (!versionName || !shapes) {
+    res.status(400);
+    throw new Error('versionName and shapes are required');
+  }
+  const version = await boardService.saveVersion(req.params.id, req.user!.id, versionName, shapes);
+  res.status(201).json(ApiResponse.success(version, 'Version saved successfully'));
+});
+
+export const getVersions = asyncHandler(async (req: Request, res: Response) => {
+  const versions = await boardService.getVersions(req.params.id);
+  res.status(200).json(ApiResponse.success(versions));
+});
+
+export const restoreVersion = asyncHandler(async (req: Request, res: Response) => {
+  const version = await boardService.restoreVersion(req.params.id, req.params.versionId);
+  res.status(200).json(ApiResponse.success(version, 'Version restored successfully'));
 });

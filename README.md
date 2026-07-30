@@ -1,113 +1,98 @@
-# Collaborative Real-Time Whiteboard & Meeting Notes Platform
+# Opas - Collaborative Real-Time Whiteboard & Meeting Notes
 
-Welcome to the Opas Software Task! This is a production-ready, full-stack application featuring a real-time collaborative canvas, synchronized meeting notes, anonymous public sharing, workspaces, and robust authentication.
-
-## 🚀 Key Features
-- **Real-Time Canvas**: Multi-player drawing with shapes, text, images, and sticky notes using React Konva and Socket.IO.
-- **Meeting Notes**: Collaborative rich-text meeting notes synchronized in real-time via Yjs.
-- **Live Cursors**: See where your teammates are pointing in real-time, complete with user tags.
-- **Public Link Sharing**: Share a unique URL to let anyone join the board anonymously without needing an account.
-- **Workspaces & Roles**: Organize boards into workspaces and manage permissions (Owner, Editor, Viewer).
-- **Infinite Undo/Redo**: Fully featured history stack built with Zustand.
-- **Canvas Export**: Export your masterpiece directly to PNG.
-- **Dockerized**: Fully containerized with Nginx, Node.js, MongoDB, and Redis.
+Opas is a high-performance, real-time collaborative workspace designed to combine the creative freedom of a whiteboard with the structured utility of meeting notes. Built with modern web technologies, it features multi-user cursors, offline persistence, rich-text syncing, and seamless export capabilities.
 
 ---
 
-## 🛠 Tech Stack
+## 🌟 Assignment Features Completed
 
-### Frontend
-- **React 18** (Vite)
-- **TypeScript**
-- **TailwindCSS** (Custom Design System)
-- **React Konva** (Canvas Rendering)
-- **Zustand** (State Management)
-- **Yjs** & **TipTap** (Collaborative Rich Text)
-- **Socket.IO Client** (Real-Time Comm)
+We have comprehensively completed all requirements from the assignment audit:
 
-### Backend
-- **Node.js** & **Express**
-- **TypeScript**
-- **MongoDB** (Mongoose)
-- **Redis** (Socket.IO Adapter / Scalability)
-- **Socket.IO** (WebSockets)
-- **JWT** (Authentication)
-- **Swagger** (API Documentation)
+- ✅ **Board Search**: Seamlessly search through your active and starred boards by title.
+- ✅ **Starred Boards**: Mark essential boards with a star for quick access in the sidebar.
+- ✅ **Last Opened Boards**: Dynamic sorting pushes your most recently opened boards to the top.
+- ✅ **Version History with Restore**: Snapshots of your whiteboard are saved automatically; restore to previous states with one click, fully synced across clients via sockets.
+- ✅ **Export Board as PNG**: One-click native high-quality canvas export.
+- ✅ **Export Meeting Notes as PDF**: Instant native PDF generation of your rich-text meeting notes.
+- ✅ **Offline IndexedDB Sync**: Continue drawing even when the WiFi drops! Strokes are isolated per board and instantly sync to `idb` in the background. A smart UI badge indicates when you're offline.
+- ✅ **AI Action Items**: A mock Express backend service that processes your meeting notes and injects actionable TODOs straight back into the editor!
+- ✅ **Integration Tests**: A full suite of Jest & Supertest integration tests running in an isolated `mongodb-memory-server`.
+- ✅ **Seed Script**: A robust, idempotent seed script to populate test data (`npm run seed`).
+- ✅ **Postman Collection**: A complete REST API postman collection is available in `/backend/postman_collection.json`.
 
 ---
 
-## 🐳 Running with Docker (Recommended)
+## 🛠️ Technology Stack
 
-The easiest way to run the entire stack (Frontend, Backend, MongoDB, Redis) is using Docker Compose.
-
-1. Ensure you have **Docker** and **Docker Compose** installed.
-2. Clone this repository.
-3. Run the following command in the root directory:
-   ```bash
-   docker-compose up --build
-   ```
-4. Open your browser and navigate to `http://localhost`.
+- **Frontend**: React 18, TypeScript, Vite, Zustand (State Management), TailwindCSS, Tiptap (Rich Text), Lucide (Icons), idb (IndexedDB).
+- **Backend**: Node.js, Express, TypeScript, MongoDB (Mongoose), Socket.io (WebSockets), Yjs (CRDT for rich text).
+- **Testing**: Jest, Supertest.
 
 ---
 
-## 💻 Running Locally for Development
+## 🚀 Getting Started
 
-If you prefer to run the servers natively for active development:
+### Prerequisites
+- Node.js (v18 or higher)
+- MongoDB running locally on `mongodb://localhost:27017/opas` (or update `.env` to point to your cluster)
+- Redis running locally on `redis://localhost:6379` (used for socket pub/sub)
 
-### 1. Prerequisites
-- **Node.js** (v18 or v20)
-- **MongoDB** running locally on port 27017 (or update `MONGODB_URI` in `.env`)
-- **Redis** running locally on port 6379 (or update `REDIS_URL` in `.env`)
+### 1. Backend Setup
 
-### 2. Backend Setup
 ```bash
 cd backend
 npm install
+
+# Copy environment variables
+cp .env.example .env
+
+# Run the seed script to populate data
+npm run seed
+
+# Start the development server
 npm run dev
 ```
-*(The backend runs on `http://localhost:5001`)*
 
-### 3. Frontend Setup
+### 2. Frontend Setup
+
 ```bash
 cd frontend
 npm install
+
+# Copy environment variables
+cp .env.example .env
+
+# Start the development server
 npm run dev
 ```
-*(The frontend runs on `http://localhost:5173`)*
 
----
+### 3. Running Integration Tests
+Integration tests spin up their own isolated in-memory MongoDB instance using `mongodb-memory-server`, ensuring your local database remains untouched!
 
-## 📖 API Documentation & Postman
-
-The backend features a fully interactive Swagger documentation UI.
-When the backend server is running, navigate to:
-👉 **[http://localhost:5001/api-docs](http://localhost:5001/api-docs)**
-
-### Import into Postman
-You don't need to manually create a Postman collection! You can instantly generate one using the Swagger JSON:
-1. Open **Postman**.
-2. Click **Import** in the top left corner.
-3. Select the **Link** tab.
-4. Paste this URL: `http://localhost:5001/api-docs.json`
-5. Click **Import**. Postman will automatically generate all the endpoints, folders, and request bodies!
-
----
-
-## 🧪 Testing
-
-The backend includes a Jest testing suite for unit tests.
 ```bash
 cd backend
-npm test
+npm run test
 ```
 
 ---
 
-## 🏗 Architecture & Design Decisions
-- **Mono-repo Structure**: Keeps the frontend and backend tightly coupled for this specific task, making it easy to share types and configurations.
-- **Anonymous Token Generation**: To protect the WebSocket firewall, anonymous users accessing public boards are issued temporary "Anonymous JWTs". This keeps the socket gateway completely secure while allowing seamless public access.
-- **Multi-stage Docker Builds**: The frontend uses a lightweight Nginx alpine image to serve static assets, while the backend compiles TypeScript and drops the heavy `devDependencies` for the final production image.
+## 🐳 Docker Setup (Optional)
+If you prefer running everything seamlessly via Docker Compose:
+
+```bash
+docker-compose up --build
+```
+This will automatically spin up MongoDB, Redis, the Backend, and the Frontend.
 
 ---
 
-> Built for the Opash Software task by a very tired but happy developer. Enjoy the whiteboard! 🎉
+## 💡 Key Highlights
+
+### Yjs & Tiptap
+The Meeting Notes feature is powered by Yjs and Tiptap, allowing flawless real-time collaboration. Cursors are synced instantly, and conflict resolution is handled autonomously by the CRDT (Conflict-free Replicated Data Type) engine.
+
+### IndexedDB Offline Sync
+The Whiteboard leverages Zustand subscriptions to instantly dump the canvas state into IndexedDB whenever a change is made. If the app is closed or loses connection, the canvas instantly hydrates from local storage the moment it reopens, ensuring zero data loss.
+
+### Mock AI Action Items
+Demonstrating advanced editor manipulation, the AI endpoint scans the meeting notes for tasks (like "TODO:") and uses `editor.chain().focus().insertContentAt(...)` to dynamically insert HTML blocks back into the live document without overwriting ongoing edits!

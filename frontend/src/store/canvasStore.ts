@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { CanvasShape, ToolType } from '../types/canvas';
 import { getSocket } from '../api/socket';
+import { saveBoardShapes, getBoardShapes } from '../utils/indexedDB';
 
 interface Camera {
   x: number;
@@ -41,6 +42,7 @@ interface CanvasState {
   receiveAddShape: (shape: CanvasShape) => void;
   receiveUpdateShape: (id: string, attrs: Partial<CanvasShape>) => void;
   receiveDeleteShapes: (ids: string[]) => void;
+  receiveRestoredShapes: (shapes: CanvasShape[]) => void;
 
   selectShapes: (ids: string[]) => void;
   clearSelection: () => void;
@@ -56,7 +58,16 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   past: [],
   future: [],
 
-  setBoardId: (id) => set({ boardId: id }),
+  setBoardId: async (id) => {
+    set({ boardId: id });
+    if (id) {
+      const localShapes = await getBoardShapes(id);
+      if (localShapes && localShapes.length > 0) {
+        set({ shapes: localShapes });
+      }
+    }
+  },
+  
   setTool: (tool) => set({ tool }),
   setCamera: (camera) => set({ camera }),
 
@@ -195,7 +206,21 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
     selectedShapeIds: state.selectedShapeIds.filter((id) => !ids.includes(id))
   })),
 
+  receiveRestoredShapes: (shapes) => set({
+    shapes,
+    past: [],
+    future: [],
+    selectedShapeIds: []
+  }),
+
   selectShapes: (ids) => set({ selectedShapeIds: ids }),
   clearSelection: () => set({ selectedShapeIds: [] }),
   clearCanvas: () => set({ shapes: [], selectedShapeIds: [], past: [], future: [] }),
 }));
+
+// Sync shapes to IndexedDB whenever they change
+useCanvasStore.subscribe((state, prevState) => {
+  if (state.boardId && state.shapes !== prevState.shapes) {
+    saveBoardShapes(state.boardId, state.shapes);
+  }
+});

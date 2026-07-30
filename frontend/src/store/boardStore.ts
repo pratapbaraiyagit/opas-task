@@ -6,12 +6,14 @@ import toast from 'react-hot-toast';
 interface BoardState {
   boards: Board[];
   starredBoards: Board[];
+  recentBoards: Board[];
   activeBoard: Board | null;
   isLoading: boolean;
   isFetching: boolean;
 
-  fetchWorkspaceBoards: (workspaceId: string) => Promise<void>;
-  fetchStarredBoards: () => Promise<void>;
+  fetchWorkspaceBoards: (workspaceId: string, search?: string) => Promise<void>;
+  fetchStarredBoards: (search?: string) => Promise<void>;
+  fetchRecentBoards: () => Promise<void>;
   fetchBoardById: (id: string) => Promise<Board>;
   createBoard: (workspaceId: string, data: { title: string }) => Promise<Board>;
   updateBoard: (id: string, data: { title?: string; isPublic?: boolean }) => Promise<void>;
@@ -23,14 +25,15 @@ interface BoardState {
 export const useBoardStore = create<BoardState>((set) => ({
   boards: [],
   starredBoards: [],
+  recentBoards: [],
   activeBoard: null,
   isLoading: false,
   isFetching: false,
 
-  fetchWorkspaceBoards: async (workspaceId: string) => {
+  fetchWorkspaceBoards: async (workspaceId: string, search?: string) => {
     set({ isFetching: true });
     try {
-      const boards = await boardApi.getWorkspaceBoards(workspaceId);
+      const boards = await boardApi.getWorkspaceBoards(workspaceId, search);
       set({ boards });
     } catch (error: any) {
       toast.error('Failed to load boards');
@@ -39,13 +42,25 @@ export const useBoardStore = create<BoardState>((set) => ({
     }
   },
 
-  fetchStarredBoards: async () => {
+  fetchStarredBoards: async (search?: string) => {
     set({ isFetching: true });
     try {
-      const starredBoards = await boardApi.getStarredBoards();
+      const starredBoards = await boardApi.getStarredBoards(search);
       set({ starredBoards });
     } catch (error: any) {
       toast.error('Failed to load starred boards');
+    } finally {
+      set({ isFetching: false });
+    }
+  },
+
+  fetchRecentBoards: async () => {
+    set({ isFetching: true });
+    try {
+      const recentBoards = await boardApi.getRecentBoards();
+      set({ recentBoards });
+    } catch (error: any) {
+      toast.error('Failed to load recent boards');
     } finally {
       set({ isFetching: false });
     }

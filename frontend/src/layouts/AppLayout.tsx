@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -40,6 +40,23 @@ export const AppLayout: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchValue, setSearchValue] = useState(searchParams.get('search') || '');
+
+  // Debounce search update to URL
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchValue) {
+        searchParams.set('search', searchValue);
+      } else {
+        searchParams.delete('search');
+      }
+      setSearchParams(searchParams);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchValue, searchParams, setSearchParams]);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
@@ -131,6 +148,8 @@ export const AppLayout: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search boards..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 rounded-xl bg-surface-100 dark:bg-surface-800 border-none text-sm text-surface-700 dark:text-surface-300 placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500/40 transition-all"
               />
             </div>
@@ -144,11 +163,6 @@ export const AppLayout: React.FC = () => {
               ) : (
                 <Moon className="w-5 h-5" />
               )}
-            </button>
-
-            <button className="btn-icon relative" title="Notifications">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
             </button>
 
             <Dropdown

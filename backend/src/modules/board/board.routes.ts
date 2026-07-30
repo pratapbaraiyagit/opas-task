@@ -9,10 +9,14 @@ import {
   createBoard,
   getWorkspaceBoards,
   getStarredBoards,
+  getRecentBoards,
   getBoardById,
   updateBoard,
   deleteBoard,
   toggleStar,
+  saveVersion,
+  getVersions,
+  restoreVersion,
 } from './board.controller';
 import { createBoardSchema, updateBoardSchema } from './board.schema';
 
@@ -42,6 +46,20 @@ const singleBoardRouter = Router();
  */
 // VERY IMPORTANT: /starred must come BEFORE /:id to avoid being caught by the ID parameter
 singleBoardRouter.get('/starred', authenticate, getStarredBoards);
+
+/**
+ * @swagger
+ * /api/boards/recent:
+ *   get:
+ *     summary: Get recently opened boards
+ *     tags: [Boards]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of recently opened boards
+ */
+singleBoardRouter.get('/recent', authenticate, getRecentBoards);
 
 /**
  * @swagger
@@ -130,8 +148,8 @@ singleBoardRouter.delete('/:id', deleteBoard);
 /**
  * @swagger
  * /api/boards/{id}/star:
- *   post:
- *     summary: Toggle star status for a board
+ *   put:
+ *     summary: Toggle board star status
  *     tags: [Boards]
  *     security:
  *       - bearerAuth: []
@@ -143,9 +161,74 @@ singleBoardRouter.delete('/:id', deleteBoard);
  *           type: string
  *     responses:
  *       200:
- *         description: Star status toggled successfully
+ *         description: Board star updated
  */
-singleBoardRouter.post('/:id/star', toggleStar);
+singleBoardRouter.put('/:id/star', authenticate, toggleStar);
+
+/**
+ * @swagger
+ * /api/boards/{id}/versions:
+ *   post:
+ *     summary: Save a new version of the board
+ *     tags: [Boards]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       201:
+ *         description: Version saved successfully
+ */
+singleBoardRouter.post('/:id/versions', authenticate, saveVersion);
+
+/**
+ * @swagger
+ * /api/boards/{id}/versions:
+ *   get:
+ *     summary: Get all versions of the board
+ *     tags: [Boards]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of versions
+ */
+singleBoardRouter.get('/:id/versions', authenticate, getVersions);
+
+/**
+ * @swagger
+ * /api/boards/{id}/versions/{versionId}/restore:
+ *   post:
+ *     summary: Restore a board version
+ *     tags: [Boards]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: versionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Version restored successfully
+ */
+singleBoardRouter.post('/:id/versions/:versionId/restore', authenticate, restoreVersion);
 
 /**
  * @swagger
@@ -230,6 +313,12 @@ workspaceBoardsRouter.post('/', authorize('editor'), validate(createBoardSchema)
  *         required: true
  *         schema:
  *           type: string
+ *       - in: query
+ *         name: search
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Search term for board title
  *     responses:
  *       200:
  *         description: List of boards in the workspace

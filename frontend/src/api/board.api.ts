@@ -2,13 +2,20 @@ import { apiClient } from './client';
 import { Board, ApiResponse } from '../types';
 
 export const boardApi = {
-  getWorkspaceBoards: async (workspaceId: string): Promise<Board[]> => {
-    const response = await apiClient.get<ApiResponse<Board[]>>(`/workspaces/${workspaceId}/boards`);
+  getWorkspaceBoards: async (workspaceId: string, search?: string): Promise<Board[]> => {
+    const params = search ? { search } : undefined;
+    const response = await apiClient.get<ApiResponse<Board[]>>(`/workspaces/${workspaceId}/boards`, { params });
     return response.data.data!;
   },
 
-  getStarredBoards: async (): Promise<Board[]> => {
-    const response = await apiClient.get<ApiResponse<Board[]>>('/boards/starred');
+  getStarredBoards: async (search?: string): Promise<Board[]> => {
+    const params = search ? { search } : undefined;
+    const response = await apiClient.get<ApiResponse<Board[]>>('/boards/starred', { params });
+    return response.data.data!;
+  },
+
+  getRecentBoards: async (): Promise<Board[]> => {
+    const response = await apiClient.get<ApiResponse<Board[]>>('/boards/recent');
     return response.data.data!;
   },
 
@@ -29,6 +36,21 @@ export const boardApi = {
 
   deleteBoard: async (id: string): Promise<void> => {
     await apiClient.delete(`/boards/${id}`);
+  },
+
+  saveVersion: async (boardId: string, versionName: string, shapes: any[]): Promise<any> => {
+    const response = await apiClient.post<ApiResponse<any>>(`/boards/${boardId}/versions`, { versionName, shapes });
+    return response.data.data;
+  },
+
+  getVersions: async (boardId: string): Promise<any[]> => {
+    const response = await apiClient.get<ApiResponse<any[]>>(`/boards/${boardId}/versions`);
+    return response.data.data!;
+  },
+
+  restoreVersion: async (boardId: string, versionId: string): Promise<any> => {
+    const response = await apiClient.post<ApiResponse<any>>(`/boards/${boardId}/versions/${versionId}/restore`);
+    return response.data.data;
   },
 
   toggleStar: async (id: string): Promise<Board> => {

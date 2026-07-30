@@ -4,12 +4,16 @@ import { useBoardStore } from '@store/boardStore';
 import { Star } from 'lucide-react';
 import { BoardCard } from './components/BoardCard';
 
+import { useSearchParams } from 'react-router-dom';
+
 export const StarredPage: React.FC = () => {
   const { starredBoards, isFetching, fetchStarredBoards } = useBoardStore();
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get('search') || '';
 
   useEffect(() => {
-    fetchStarredBoards();
-  }, [fetchStarredBoards]);
+    fetchStarredBoards(search);
+  }, [fetchStarredBoards, search]);
 
   return (
     <div className="w-full max-w-7xl mx-auto">

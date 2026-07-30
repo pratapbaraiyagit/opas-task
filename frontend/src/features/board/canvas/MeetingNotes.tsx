@@ -3,9 +3,11 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
 import * as Y from 'yjs';
-import { X, Bold, Italic, List, ListOrdered } from 'lucide-react';
+import { X, Bold, Italic, List, ListOrdered, Download, Sparkles } from 'lucide-react';
 import { cn } from '@utils/index';
 import { getSocket } from '../../../api/socket';
+import { generateActionItems } from '../../../api/ai.api';
+import toast from 'react-hot-toast';
 
 interface MeetingNotesProps {
   boardId: string;
@@ -15,6 +17,7 @@ interface MeetingNotesProps {
 
 export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, onClose }) => {
   const [ydocState, setYdocState] = useState<{ ydoc: Y.Doc } | null>(null);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   useEffect(() => {
     const doc = new Y.Doc();
@@ -63,6 +66,89 @@ export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, onC
     },
   }, [ydocState]); // Recreate editor when ydocState is ready
 
+  const exportToPDF = () => {
+    if (!editor) return;
+    const htmlContent = editor.getHTML();
+    
+    // Create a temporary hidden iframe for printing
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+
+    // Build print-friendly HTML
+    doc.open();
+    doc.write(`
+      <html>
+        <head>
+          <title>Meeting Notes - ${new Date().toLocaleDateString()}</title>
+          <style>
+            body { 
+              font-family: system-ui, -apple-system, sans-serif; 
+              color: #1a1a1a;
+              padding: 40px;
+              line-height: 1.6;
+            }
+            h1, h2, h3 { color: #111; margin-top: 1.5em; margin-bottom: 0.5em; }
+            ul, ol { padding-left: 20px; }
+            li { margin-bottom: 0.25em; }
+            p { margin-bottom: 1em; }
+            @page { margin: 20mm; }
+          </style>
+        </head>
+        <body>
+          <h2>Meeting Notes</h2>
+          <hr style="border: 0; border-top: 1px solid #ccc; margin-bottom: 2em;" />
+          ${htmlContent}
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    // Focus and print, then cleanup
+    iframe.contentWindow?.focus();
+    setTimeout(() => {
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 100);
+    }, 250);
+  };
+
+  const handleGenerateActionItems = async () => {
+    if (!editor) return;
+    try {
+      setIsGeneratingAI(true);
+      const content = editor.getText();
+      const res = await generateActionItems(content);
+      
+      const { actionItems } = res;
+      if (actionItems && actionItems.length > 0) {
+        let htmlList = '<h3>AI Action Items ✨</h3><ul>';
+        actionItems.forEach((item: string) => {
+          htmlList += `<li>${item}</li>`;
+        });
+        htmlList += '</ul><p></p>';
+        
+        editor.chain().focus().insertContentAt(editor.state.doc.content.size, htmlList).run();
+        toast.success('Action items generated');
+      } else {
+        toast('No action items found');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to generate action items');
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -109,8 +195,32 @@ export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, onC
           </button>
           
           <div className="flex-1" />
+          
+          <button
+            onClick={handleGenerateActionItems}
+            disabled={isGeneratingAI}
+            title="Generate AI Action Items"
+            className={cn(
+              "flex items-center gap-1 p-1.5 rounded text-xs font-medium mr-1 transition-colors",
+              isGeneratingAI 
+                ? "bg-surface-200 text-surface-500 cursor-not-allowed dark:bg-surface-800 dark:text-surface-600" 
+                : "bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/40 dark:text-primary-400 dark:hover:bg-primary-900/60"
+            )}
+          >
+            <Sparkles className={cn("w-3.5 h-3.5", isGeneratingAI && "animate-pulse")} />
+            AI
+          </button>
+
+          <button
+            onClick={exportToPDF}
+            title="Export as PDF"
+            className="p-1.5 rounded text-surface-700 hover:bg-surface-200 dark:text-surface-300 dark:hover:bg-surface-800"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+
           {ydocState && (
-            <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
+            <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full ml-1">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
               Live Sync
             </div>

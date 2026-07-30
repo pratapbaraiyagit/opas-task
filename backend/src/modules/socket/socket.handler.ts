@@ -64,6 +64,10 @@ export const initializeSocket = (httpServer: HttpServer): Server => {
       socket.to(boardId).emit('shape:delete', shapeIds);
     });
 
+    socket.on('board:restored', ({ boardId, shapes }) => {
+      socket.to(boardId).emit('board:restored', shapes);
+    });
+
     // Handle cursor movement (for Phase 8)
     socket.on('cursor:move', ({ boardId, cursor }) => {
       socket.to(boardId).emit('cursor:move', { 

@@ -10,7 +10,6 @@ import {
   verifyEmail,
   forgotPassword,
   resetPassword,
-  getMe,
   getAnonymousToken,
 } from './auth.controller';
 import {
@@ -194,21 +193,7 @@ router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
  */
 router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
 
-/**
- * @swagger
- * /api/auth/me:
- *   get:
- *     summary: Get current authenticated user
- *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Successfully retrieved user
- *       401:
- *         description: Unauthorized
- */
-router.get('/me', authenticate, getMe);
+
 
 /**
  * @swagger

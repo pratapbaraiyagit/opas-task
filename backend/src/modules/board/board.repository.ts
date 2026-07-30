@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { Board, IBoard } from './board.model';
+import { BoardVersion, IBoardVersion } from './board-version.model';
 import { CreateBoardDto } from './board.dto';
 
 export class BoardRepository {
@@ -17,16 +18,31 @@ export class BoardRepository {
     return Board.findById(id).populate('createdBy', 'name email avatar');
   }
 
-  async findAllByWorkspace(workspaceId: string): Promise<IBoard[]> {
-    return Board.find({ workspaceId: new Types.ObjectId(workspaceId) })
+  async findAllByWorkspace(workspaceId: string, search?: string): Promise<IBoard[]> {
+    const query: any = { workspaceId: new Types.ObjectId(workspaceId) };
+    if (search) {
+      query.title = { $regex: search, $options: 'i' };
+    }
+    return Board.find(query)
       .populate('createdBy', 'name email avatar')
       .sort({ updatedAt: -1 });
   }
 
-  async findAllStarredByUser(userId: string): Promise<IBoard[]> {
-    return Board.find({ starredBy: new Types.ObjectId(userId) })
+  async findAllStarredByUser(userId: string, search?: string): Promise<IBoard[]> {
+    const query: any = { starredBy: new Types.ObjectId(userId) };
+    if (search) {
+      query.title = { $regex: search, $options: 'i' };
+    }
+    return Board.find(query)
       .populate('createdBy', 'name email avatar')
       .sort({ updatedAt: -1 });
+  }
+
+  async findRecentBoards(userId: string): Promise<IBoard[]> {
+    return Board.find({ [`lastOpenedAt.${userId}`]: { $exists: true } })
+      .populate('createdBy', 'name email avatar')
+      .sort({ [`lastOpenedAt.${userId}`]: -1 })
+      .limit(4);
   }
 
   async update(id: string, data: Partial<IBoard>): Promise<IBoard | null> {
@@ -50,5 +66,25 @@ export class BoardRepository {
       { _id: new Types.ObjectId(id) },
       { $set: { [`lastOpenedAt.${userId}`]: new Date() } }
     );
+  }
+
+  async saveVersion(boardId: string, userId: string, versionName: string, shapes: any[]): Promise<IBoardVersion> {
+    const version = new BoardVersion({
+      boardId: new Types.ObjectId(boardId),
+      versionName,
+      shapes,
+      createdBy: new Types.ObjectId(userId),
+    });
+    return version.save();
+  }
+
+  async getVersions(boardId: string): Promise<IBoardVersion[]> {
+    return BoardVersion.find({ boardId: new Types.ObjectId(boardId) })
+      .populate('createdBy', 'name email avatar')
+      .sort({ createdAt: -1 });
+  }
+
+  async getVersionById(versionId: string): Promise<IBoardVersion | null> {
+    return BoardVersion.findById(versionId).populate('createdBy', 'name email avatar');
   }
 }

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Share, FileText, Download } from 'lucide-react';
+import { ChevronLeft, Share, FileText, Download, History, WifiOff } from 'lucide-react';
 import { Board } from '../../../types';
 import { Button } from '@components/ui';
 import { ShareModal } from './components/ShareModal';
+import { VersionHistoryModal } from './components/VersionHistoryModal';
 
 interface CanvasHeaderProps {
   board: Board;
@@ -14,6 +15,21 @@ interface CanvasHeaderProps {
 export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes, onUpdateBoard }) => {
   const navigate = useNavigate();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   return (
     <>
@@ -32,6 +48,12 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes
               Public
             </span>
           )}
+          {isOffline && (
+            <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2 py-0.5 rounded-full">
+              <WifiOff className="w-3 h-3" />
+              Offline
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -41,6 +63,10 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes
               Me
             </div>
           </div>
+          <Button variant="secondary" className="gap-2" onClick={() => setIsHistoryModalOpen(true)}>
+            <History className="w-4 h-4" />
+            History
+          </Button>
           <Button variant="secondary" className="gap-2" onClick={onToggleNotes}>
             <FileText className="w-4 h-4" />
             Notes
@@ -61,6 +87,12 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes
         isOpen={isShareModalOpen} 
         onClose={() => setIsShareModalOpen(false)} 
         onUpdate={onUpdateBoard} 
+      />
+      
+      <VersionHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+        boardId={board.id}
       />
     </>
   );

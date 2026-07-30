@@ -195,21 +195,7 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
   res.status(200).json(ApiResponse.success(null, result.message));
 });
 
-/**
- * @swagger
- * /api/auth/me:
- *   get:
- *     tags: [Auth]
- *     summary: Get current user profile
- *     security: [{ bearerAuth: [] }]
- *     responses:
- *       200: { description: User profile }
- *       401: { description: Unauthorized }
- */
-export const getMe = asyncHandler(async (req: Request, res: Response) => {
-  const user = await authService.getProfile(req.user!.id);
-  res.status(200).json(ApiResponse.success(user));
-});
+
 
 import { v4 as uuidv4 } from 'uuid';
 import { TokenService } from '@services/token.service';

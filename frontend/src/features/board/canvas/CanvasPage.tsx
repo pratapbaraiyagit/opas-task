@@ -13,7 +13,7 @@ import { initSocket, disconnectSocket } from '../../../api/socket';
 export const CanvasPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { fetchBoardById, activeBoard, isFetching } = useBoardStore();
-  const { setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, clearCanvas } = useCanvasStore();
+  const { setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, receiveRestoredShapes, clearCanvas } = useCanvasStore();
   const [error, setError] = useState<string | null>(null);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
 
@@ -44,6 +44,7 @@ export const CanvasPage: React.FC = () => {
           socketInstance.on('shape:add', receiveAddShape);
           socketInstance.on('shape:update', ({ shapeId, attrs }: any) => receiveUpdateShape(shapeId, attrs));
           socketInstance.on('shape:delete', receiveDeleteShapes);
+          socketInstance.on('board:restored', receiveRestoredShapes);
         }
       }).catch(err => {
         setError(err.response?.data?.message || 'Failed to load board');
@@ -55,13 +56,14 @@ export const CanvasPage: React.FC = () => {
           socketInstance.off('shape:add', receiveAddShape);
           socketInstance.off('shape:update');
           socketInstance.off('shape:delete', receiveDeleteShapes);
+          socketInstance.off('board:restored', receiveRestoredShapes);
           disconnectSocket();
         }
         setBoardId(null);
         clearCanvas();
       };
     }
-  }, [id, fetchBoardById, setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, clearCanvas]);
+  }, [id, fetchBoardById, setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, receiveRestoredShapes, clearCanvas]);
 
   if (error) {
     return (
@@ -84,7 +86,7 @@ export const CanvasPage: React.FC = () => {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-surface-50 dark:bg-surface-950 flex">
-      <div className="relative flex-1 h-full">
+      <div className="relative flex-1 h-full min-w-0">
         <CanvasHeader 
           board={activeBoard} 
           onToggleNotes={() => setIsNotesOpen(!isNotesOpen)} 
