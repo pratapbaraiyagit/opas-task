@@ -14,15 +14,15 @@
     "declarationMap": true,
     "sourceMap": true,
     "moduleResolution": "node",
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {
-      "@config/*": ["config/*"],
-      "@modules/*": ["modules/*"],
-      "@middlewares/*": ["middlewares/*"],
-      "@utils/*": ["utils/*"],
-      "@types/*": ["types/*"],
-      "@services/*": ["services/*"],
-      "@routes/*": ["routes/*"]
+      "@config/*": ["src/config/*"],
+      "@modules/*": ["src/modules/*"],
+      "@middlewares/*": ["src/middlewares/*"],
+      "@utils/*": ["src/utils/*"],
+      "@types/*": ["src/types/*"],
+      "@services/*": ["src/services/*"],
+      "@routes/*": ["src/routes/*"]
     },
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },

@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "Collaborative Real-Time Whiteboard & Meeting Notes Platform - Backend",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=20 <23"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
     "build": "tsc && tsc-alias",
+    "render-build": "npm install --include=dev && npm run build",
     "start": "node -r tsconfig-paths/register dist/server.js",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
@@ -70,6 +74,6 @@
     "ts-node-dev": "^2.0.0",
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.5.4"
+    "typescript": "~5.5.4"
   }
 }
