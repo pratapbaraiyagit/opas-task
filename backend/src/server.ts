@@ -8,17 +8,14 @@ import app from './app';
 
 const server = http.createServer(app);
 
-// ─── Socket.IO will be attached here in Phase 6 ─────────────────────────────
-import { initializeSocket } from './modules/socket/socket.handler';
-initializeSocket(server);
-
 const startServer = async (): Promise<void> => {
   try {
-    // Connect to databases
     await connectDatabase();
     await connectRedis();
 
-    // Start HTTP server
+    const { initializeSocket } = await import('./modules/socket/socket.handler');
+    await initializeSocket(server);
+
     server.listen(env.PORT, () => {
       logger.info(`🚀 Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
       logger.info(`📚 API Docs available at http://localhost:${env.PORT}/api-docs`);

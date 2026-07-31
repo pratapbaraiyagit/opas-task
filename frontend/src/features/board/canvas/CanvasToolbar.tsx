@@ -5,6 +5,7 @@ import {
   Square, 
   Circle, 
   Minus, 
+  Pencil,
   Type, 
   StickyNote,
   Undo,
@@ -17,6 +18,7 @@ import { cn } from '@utils/index';
 const tools: { type: ToolType; icon: React.ElementType; label: string }[] = [
   { type: 'select', icon: MousePointer2, label: 'Select (V)' },
   { type: 'hand', icon: Hand, label: 'Pan (H)' },
+  { type: 'pen', icon: Pencil, label: 'Pen (P)' },
   { type: 'rectangle', icon: Square, label: 'Rectangle (R)' },
   { type: 'ellipse', icon: Circle, label: 'Ellipse (O)' },
   { type: 'line', icon: Minus, label: 'Line (L)' },

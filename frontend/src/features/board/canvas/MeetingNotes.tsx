@@ -12,10 +12,11 @@ import toast from 'react-hot-toast';
 interface MeetingNotesProps {
   boardId: string;
   isOpen: boolean;
+  readOnly?: boolean;
   onClose: () => void;
 }
 
-export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, onClose }) => {
+export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, readOnly = false, onClose }) => {
   const [ydocState, setYdocState] = useState<{ ydoc: Y.Doc } | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
@@ -27,7 +28,8 @@ export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, onC
     if (!socket) return;
     
     // Listen for local changes and send them to the server
-    const handleUpdate = (update: Uint8Array, origin: any) => {
+    const handleUpdate = (update: Uint8Array, origin: unknown) => {
+      if (readOnly) return;
       if (origin !== 'remote') {
         socket.emit('yjs:update', { boardId, update: Array.from(update) });
       }
@@ -37,18 +39,25 @@ export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, onC
     const handleRemoteUpdate = (updateArray: number[]) => {
       Y.applyUpdate(doc, new Uint8Array(updateArray), 'remote');
     };
+
+    const handleSync = (stateArray: number[]) => {
+      Y.applyUpdate(doc, new Uint8Array(stateArray), 'remote');
+    };
     
     doc.on('update', handleUpdate);
     socket.on('yjs:update', handleRemoteUpdate);
+    socket.on('yjs:sync', handleSync);
     
     return () => {
       doc.off('update', handleUpdate);
       socket.off('yjs:update', handleRemoteUpdate);
+      socket.off('yjs:sync', handleSync);
       doc.destroy();
     };
-  }, [boardId]);
+  }, [boardId, readOnly]);
 
   const editor = useEditor({
+    editable: !readOnly,
     extensions: [
       StarterKit.configure({
         history: false, // History is handled by Yjs
@@ -64,7 +73,7 @@ export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, onC
         class: 'prose prose-sm dark:prose-invert focus:outline-none min-h-[500px]',
       },
     },
-  }, [ydocState]); // Recreate editor when ydocState is ready
+  }, [ydocState, readOnly]);
 
   const exportToPDF = () => {
     if (!editor) return;
@@ -166,7 +175,7 @@ export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, onC
         </button>
       </div>
 
-      {editor && (
+      {editor && !readOnly && (
         <div className="flex items-center gap-1 p-2 border-b border-surface-200 dark:border-surface-800 bg-surface-50 dark:bg-surface-950/50">
           <button
             onClick={() => editor.chain().focus().toggleBold().run()}
@@ -228,7 +237,13 @@ export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, onC
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 cursor-text bg-white dark:bg-surface-900" onClick={() => editor?.commands.focus()}>
+      {editor && readOnly && (
+        <div className="px-4 py-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-b border-surface-200 dark:border-surface-800">
+          View only — meeting notes cannot be edited.
+        </div>
+      )}
+
+      <div className={`flex-1 overflow-y-auto p-4 bg-white dark:bg-surface-900 ${readOnly ? 'cursor-default' : 'cursor-text'}`} onClick={() => !readOnly && editor?.commands.focus()}>
         <EditorContent editor={editor} />
       </div>
     </div>

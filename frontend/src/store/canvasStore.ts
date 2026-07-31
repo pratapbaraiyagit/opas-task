@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { CanvasShape, ToolType } from '../types/canvas';
 import { getSocket } from '../api/socket';
-import { saveBoardShapes, getBoardShapes } from '../utils/indexedDB';
+import { saveBoardShapes } from '../utils/indexedDB';
 
 interface Camera {
   x: number;
@@ -20,25 +20,24 @@ interface CanvasState {
   selectedShapeIds: string[];
   tool: ToolType;
   camera: Camera;
+  readOnly: boolean;
   
   past: HistoryAction[];
   future: HistoryAction[];
   
-  // Actions
   setBoardId: (id: string | null) => void;
+  setReadOnly: (readOnly: boolean) => void;
+  loadShapes: (shapes: CanvasShape[]) => void;
   setTool: (tool: ToolType) => void;
   setCamera: (camera: Camera) => void;
   
-  // Local Actions (Emit to Socket)
   addShape: (shape: CanvasShape) => void;
   updateShape: (id: string, attrs: Partial<CanvasShape>) => void;
   deleteShapes: (ids: string[]) => void;
   
-  // History Actions
   undo: () => void;
   redo: () => void;
   
-  // Remote Actions (From Socket)
   receiveAddShape: (shape: CanvasShape) => void;
   receiveUpdateShape: (id: string, attrs: Partial<CanvasShape>) => void;
   receiveDeleteShapes: (ids: string[]) => void;
@@ -55,23 +54,35 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   selectedShapeIds: [],
   tool: 'select',
   camera: { x: 0, y: 0, scale: 1 },
+  readOnly: false,
   past: [],
   future: [],
 
-  setBoardId: async (id) => {
+  setBoardId: (id) => {
     set({ boardId: id });
-    if (id) {
-      const localShapes = await getBoardShapes(id);
-      if (localShapes && localShapes.length > 0) {
-        set({ shapes: localShapes });
-      }
-    }
+  },
+
+  setReadOnly: (readOnly) => {
+    set({ readOnly, tool: readOnly ? 'hand' : 'select' });
+  },
+
+  loadShapes: (shapes) => {
+    set({
+      shapes: shapes as CanvasShape[],
+      past: [],
+      future: [],
+      selectedShapeIds: [],
+    });
   },
   
-  setTool: (tool) => set({ tool }),
+  setTool: (tool) => {
+    if (get().readOnly && tool !== 'hand') return;
+    set({ tool });
+  },
   setCamera: (camera) => set({ camera }),
 
   addShape: (shape) => {
+    if (get().readOnly) return;
     const { boardId, past } = get();
     const socket = getSocket();
     if (socket && boardId) {
@@ -86,6 +97,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   updateShape: (id, attrs) => {
+    if (get().readOnly) return;
     const { boardId, shapes, past } = get();
     const oldShape = shapes.find(s => s.id === id);
     if (!oldShape) return;
@@ -107,6 +119,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   deleteShapes: (ids) => {
+    if (get().readOnly) return;
     const { boardId, shapes, past } = get();
     const deletedShapes = shapes.filter(s => ids.includes(s.id));
     
@@ -123,6 +136,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   undo: () => {
+    if (get().readOnly) return;
     const { past, future, boardId, shapes } = get();
     if (past.length === 0) return;
     
@@ -158,6 +172,7 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   redo: () => {
+    if (get().readOnly) return;
     const { past, future, boardId, shapes } = get();
     if (future.length === 0) return;
     
@@ -192,7 +207,6 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
   },
 
   receiveAddShape: (shape) => set((state) => {
-    // Avoid duplicates
     if (state.shapes.find(s => s.id === shape.id)) return state;
     return { shapes: [...state.shapes, shape] };
   }),
@@ -215,10 +229,9 @@ export const useCanvasStore = create<CanvasState>((set, get) => ({
 
   selectShapes: (ids) => set({ selectedShapeIds: ids }),
   clearSelection: () => set({ selectedShapeIds: [] }),
-  clearCanvas: () => set({ shapes: [], selectedShapeIds: [], past: [], future: [] }),
+  clearCanvas: () => set({ shapes: [], selectedShapeIds: [], past: [], future: [], readOnly: false }),
 }));
 
-// Sync shapes to IndexedDB whenever they change
 useCanvasStore.subscribe((state, prevState) => {
   if (state.boardId && state.shapes !== prevState.shapes) {
     saveBoardShapes(state.boardId, state.shapes);

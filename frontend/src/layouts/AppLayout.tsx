@@ -10,7 +10,6 @@ import {
   Moon,
   Sun,
   LogOut,
-  Bell,
   Search,
   Plus,
 } from 'lucide-react';

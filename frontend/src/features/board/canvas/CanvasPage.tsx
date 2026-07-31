@@ -9,20 +9,34 @@ import { MeetingNotes } from './MeetingNotes';
 import { CursorsLayer } from './components/CursorsLayer';
 import { Spinner } from '@components/ui';
 import { initSocket, disconnectSocket } from '../../../api/socket';
+import { CanvasShape } from '../../../types/canvas';
 
 export const CanvasPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { fetchBoardById, activeBoard, isFetching } = useBoardStore();
-  const { setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, receiveRestoredShapes, clearCanvas } = useCanvasStore();
+  const {
+    setBoardId,
+    setReadOnly,
+    loadShapes,
+    receiveAddShape,
+    receiveUpdateShape,
+    receiveDeleteShapes,
+    receiveRestoredShapes,
+    clearCanvas,
+    readOnly,
+  } = useCanvasStore();
   const [error, setError] = useState<string | null>(null);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
 
   useEffect(() => {
-    let socketInstance: any = null;
+    let socketInstance: ReturnType<typeof initSocket> | null = null;
 
     if (id) {
       setBoardId(id);
       fetchBoardById(id).then(async (board) => {
+        loadShapes((board.shapes ?? []) as CanvasShape[]);
+        setReadOnly(board.canEdit === false);
+
         let token = localStorage.getItem('accessToken');
         
         if (!token && board?.isPublic) {
@@ -41,8 +55,11 @@ export const CanvasPage: React.FC = () => {
           
           socketInstance.emit('join_board', id);
 
+          socketInstance.on('canvas:state', receiveRestoredShapes);
           socketInstance.on('shape:add', receiveAddShape);
-          socketInstance.on('shape:update', ({ shapeId, attrs }: any) => receiveUpdateShape(shapeId, attrs));
+          socketInstance.on('shape:update', ({ shapeId, attrs }: { shapeId: string; attrs: Partial<CanvasShape> }) =>
+            receiveUpdateShape(shapeId, attrs),
+          );
           socketInstance.on('shape:delete', receiveDeleteShapes);
           socketInstance.on('board:restored', receiveRestoredShapes);
         }
@@ -53,6 +70,7 @@ export const CanvasPage: React.FC = () => {
       return () => {
         if (socketInstance) {
           socketInstance.emit('leave_board', id);
+          socketInstance.off('canvas:state', receiveRestoredShapes);
           socketInstance.off('shape:add', receiveAddShape);
           socketInstance.off('shape:update');
           socketInstance.off('shape:delete', receiveDeleteShapes);
@@ -63,7 +81,18 @@ export const CanvasPage: React.FC = () => {
         clearCanvas();
       };
     }
-  }, [id, fetchBoardById, setBoardId, receiveAddShape, receiveUpdateShape, receiveDeleteShapes, receiveRestoredShapes, clearCanvas]);
+  }, [
+    id,
+    fetchBoardById,
+    setBoardId,
+    setReadOnly,
+    loadShapes,
+    receiveAddShape,
+    receiveUpdateShape,
+    receiveDeleteShapes,
+    receiveRestoredShapes,
+    clearCanvas,
+  ]);
 
   if (error) {
     return (
@@ -88,17 +117,19 @@ export const CanvasPage: React.FC = () => {
     <div className="relative w-full h-screen overflow-hidden bg-surface-50 dark:bg-surface-950 flex">
       <div className="relative flex-1 h-full min-w-0">
         <CanvasHeader 
-          board={activeBoard} 
+          board={activeBoard}
+          readOnly={readOnly}
           onToggleNotes={() => setIsNotesOpen(!isNotesOpen)} 
           onUpdateBoard={(board) => useBoardStore.getState().setActiveBoard(board)}
         />
-        <CanvasToolbar />
+        {!readOnly && <CanvasToolbar />}
         <CursorsLayer boardId={activeBoard.id} />
-        <BoardCanvas />
+        <BoardCanvas readOnly={readOnly} />
       </div>
       
       <MeetingNotes 
-        boardId={activeBoard.id} 
+        boardId={activeBoard.id}
+        readOnly={readOnly}
         isOpen={isNotesOpen} 
         onClose={() => setIsNotesOpen(false)} 
       />

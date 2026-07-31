@@ -9,7 +9,7 @@ import { CanvasShape } from '../../../types/canvas';
 import { getSocket } from '../../../api/socket';
 import { URLImage } from './components/URLImage';
 
-export const BoardCanvas: React.FC = () => {
+export const BoardCanvas: React.FC<{ readOnly?: boolean }> = ({ readOnly = false }) => {
   const { 
     boardId,
     shapes, 
@@ -77,6 +77,8 @@ export const BoardCanvas: React.FC = () => {
         return;
       }
 
+      if (readOnly) return;
+
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         if (e.shiftKey) {
@@ -97,7 +99,7 @@ export const BoardCanvas: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, selectedShapeIds]);
+  }, [undo, redo, selectedShapeIds, readOnly]);
 
   const getPointerPos = () => {
     const stage = stageRef.current;
@@ -113,7 +115,7 @@ export const BoardCanvas: React.FC = () => {
   };
 
   const handlePointerDown = (e: any) => {
-    if (tool === 'hand') return;
+    if (readOnly || tool === 'hand') return;
 
     const clickedOnEmpty = e.target === e.target.getStage();
     if (clickedOnEmpty) {
@@ -135,7 +137,7 @@ export const BoardCanvas: React.FC = () => {
       fill: tool === 'sticky' ? '#fef08a' : (tool === 'text' ? 'transparent' : '#e0e7ff'),
       stroke: tool === 'text' || tool === 'sticky' ? undefined : '#4f46e5',
       strokeWidth: tool === 'text' || tool === 'sticky' ? 0 : 2,
-      points: tool === 'line' ? [pos.x, pos.y, pos.x, pos.y] : undefined,
+      points: tool === 'line' || tool === 'pen' ? [pos.x, pos.y] : undefined,
       text: tool === 'text' ? 'New Text' : (tool === 'sticky' ? 'Note' : undefined),
     };
 
@@ -147,7 +149,6 @@ export const BoardCanvas: React.FC = () => {
   const handlePointerMove = () => {
     const pos = getPointerPos();
 
-    // Broadcast cursor position (throttle to ~20fps to prevent flooding)
     const socket = getSocket();
     if (socket) {
       const now = Date.now();
@@ -157,12 +158,17 @@ export const BoardCanvas: React.FC = () => {
       }
     }
 
-    if (!isDrawing || !currentShape) return;
+    if (readOnly || !isDrawing || !currentShape) return;
 
     if (currentShape.type === 'line') {
       setCurrentShape({
         ...currentShape,
         points: [currentShape.points![0], currentShape.points![1], pos.x, pos.y]
+      });
+    } else if (currentShape.type === 'pen') {
+      setCurrentShape({
+        ...currentShape,
+        points: [...(currentShape.points || []), pos.x, pos.y],
       });
     } else {
       setCurrentShape({
@@ -174,7 +180,7 @@ export const BoardCanvas: React.FC = () => {
   };
 
   const handlePointerUp = () => {
-    if (!isDrawing || !currentShape) return;
+    if (readOnly || !isDrawing || !currentShape) return;
     
     setIsDrawing(false);
     
@@ -190,10 +196,20 @@ export const BoardCanvas: React.FC = () => {
     }
 
     // Only add if it has some size, or if it's text
+    const hasLineLength =
+      finalShape.type === 'line' &&
+      finalShape.points &&
+      Math.abs(finalShape.points[2] - finalShape.points[0]) > 5;
+    const hasPenStroke =
+      finalShape.type === 'pen' &&
+      finalShape.points &&
+      finalShape.points.length >= 4;
+
     if (
-      finalShape.type === 'text' || 
-      (finalShape.width && finalShape.width > 5) || 
-      (finalShape.points && Math.abs(finalShape.points[2] - finalShape.points[0]) > 5)
+      finalShape.type === 'text' ||
+      (finalShape.width && finalShape.width > 5) ||
+      hasLineLength ||
+      hasPenStroke
     ) {
       // Default size for text/sticky if just clicked
       if (finalShape.type === 'sticky' && (!finalShape.width || finalShape.width < 50)) {
@@ -233,6 +249,7 @@ export const BoardCanvas: React.FC = () => {
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    if (readOnly) return;
     e.preventDefault();
     if (!stageRef.current) return;
     stageRef.current.setPointersPositions(e);
@@ -288,7 +305,7 @@ export const BoardCanvas: React.FC = () => {
       rotation: shape.rotation,
       scaleX: shape.scaleX,
       scaleY: shape.scaleY,
-      draggable: tool === 'select',
+      draggable: !readOnly && tool === 'select',
       onClick: () => {
         if (tool === 'select') selectShapes([shape.id]);
       },
@@ -317,6 +334,23 @@ export const BoardCanvas: React.FC = () => {
         return <Ellipse key={shape.id} {...commonProps} radiusX={Math.abs(shape.width!/2)} radiusY={Math.abs(shape.height!/2)} offset={{ x: -(shape.width!/2), y: -(shape.height!/2) }} />;
       case 'line':
         return <Line key={shape.id} {...commonProps} points={shape.points!} />;
+      case 'pen':
+        return (
+          <Line
+            key={shape.id}
+            id={shape.id}
+            points={shape.points!}
+            stroke={shape.stroke}
+            strokeWidth={shape.strokeWidth}
+            lineCap="round"
+            lineJoin="round"
+            tension={0.5}
+            draggable={tool === 'select'}
+            onClick={() => {
+              if (tool === 'select') selectShapes([shape.id]);
+            }}
+          />
+        );
       case 'sticky':
         return (
           <React.Fragment key={shape.id}>

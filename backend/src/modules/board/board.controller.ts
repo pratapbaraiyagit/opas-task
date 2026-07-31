@@ -2,10 +2,27 @@ import { Request, Response } from 'express';
 
 import { asyncHandler } from '@middlewares/asyncHandler';
 import { ApiResponse } from '@utils/ApiResponse';
+import { getBoardAccess } from '@services/boardAccess.service';
 
 import { BoardService } from './board.service';
 
 const boardService = new BoardService();
+
+const formatBoardResponse = async (
+  board: Awaited<ReturnType<BoardService['getBoardById']>>,
+  userId?: string,
+  isAnonymous = false,
+) => {
+  const boardJson = board.toJSON ? board.toJSON() : board;
+  const access = await getBoardAccess(userId ?? '', isAnonymous, boardJson.id);
+
+  return {
+    ...boardJson,
+    shapes: board.shapes ?? [],
+    canEdit: access?.canEdit ?? false,
+    canView: access?.canView ?? false,
+  };
+};
 
 export const createBoard = asyncHandler(async (req: Request, res: Response) => {
   const board = await boardService.createBoard(req.user!.id, req.body);
@@ -31,7 +48,12 @@ export const getRecentBoards = asyncHandler(async (req: Request, res: Response) 
 
 export const getBoardById = asyncHandler(async (req: Request, res: Response) => {
   const board = await boardService.getBoardById(req.params.id, req.user?.id);
-  res.status(200).json(ApiResponse.success(board));
+  const payload = await formatBoardResponse(
+    board,
+    req.user?.id,
+    !!req.user?.isAnonymous,
+  );
+  res.status(200).json(ApiResponse.success(payload));
 });
 
 export const updateBoard = asyncHandler(async (req: Request, res: Response) => {

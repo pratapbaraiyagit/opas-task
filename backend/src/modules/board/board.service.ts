@@ -121,6 +121,7 @@ export class BoardService {
     if (version.boardId.toString() !== boardId) {
       throw ApiError.badRequest('Version does not belong to this board');
     }
+    await this.boardRepository.setShapes(boardId, version.shapes);
     return version;
   }
 }

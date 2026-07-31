@@ -8,11 +8,12 @@ import { VersionHistoryModal } from './components/VersionHistoryModal';
 
 interface CanvasHeaderProps {
   board: Board;
+  readOnly?: boolean;
   onToggleNotes: () => void;
   onUpdateBoard: (board: Board) => void;
 }
 
-export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes, onUpdateBoard }) => {
+export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, readOnly = false, onToggleNotes, onUpdateBoard }) => {
   const navigate = useNavigate();
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -48,6 +49,11 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes
               Public
             </span>
           )}
+          {readOnly && (
+            <span className="text-[10px] font-medium uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">
+              View Only
+            </span>
+          )}
           {isOffline && (
             <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-2 py-0.5 rounded-full">
               <WifiOff className="w-3 h-3" />
@@ -63,10 +69,6 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes
               Me
             </div>
           </div>
-          <Button variant="secondary" className="gap-2" onClick={() => setIsHistoryModalOpen(true)}>
-            <History className="w-4 h-4" />
-            History
-          </Button>
           <Button variant="secondary" className="gap-2" onClick={onToggleNotes}>
             <FileText className="w-4 h-4" />
             Notes
@@ -75,25 +77,37 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({ board, onToggleNotes
             <Download className="w-4 h-4" />
             Export
           </Button>
-          <Button variant="primary" className="gap-2" onClick={() => setIsShareModalOpen(true)}>
-            <Share className="w-4 h-4" />
-            Share
-          </Button>
+          {!readOnly && (
+            <>
+              <Button variant="secondary" className="gap-2" onClick={() => setIsHistoryModalOpen(true)}>
+                <History className="w-4 h-4" />
+                History
+              </Button>
+              <Button variant="primary" className="gap-2" onClick={() => setIsShareModalOpen(true)}>
+                <Share className="w-4 h-4" />
+                Share
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      <ShareModal 
-        board={board} 
-        isOpen={isShareModalOpen} 
-        onClose={() => setIsShareModalOpen(false)} 
-        onUpdate={onUpdateBoard} 
-      />
+      {!readOnly && (
+        <ShareModal 
+          board={board} 
+          isOpen={isShareModalOpen} 
+          onClose={() => setIsShareModalOpen(false)} 
+          onUpdate={onUpdateBoard} 
+        />
+      )}
       
-      <VersionHistoryModal
-        isOpen={isHistoryModalOpen}
-        onClose={() => setIsHistoryModalOpen(false)}
-        boardId={board.id}
-      />
+      {!readOnly && (
+        <VersionHistoryModal
+          isOpen={isHistoryModalOpen}
+          onClose={() => setIsHistoryModalOpen(false)}
+          boardId={board.id}
+        />
+      )}
     </>
   );
 };

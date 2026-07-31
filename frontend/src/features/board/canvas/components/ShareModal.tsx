@@ -61,7 +61,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ board, isOpen, onClose, 
       expiresAt = date.toISOString();
     }
     
-    updateShareSettings({ publicExpiresAt: expiresAt as any });
+    updateShareSettings({ publicExpiresAt: expiresAt });
   };
 
   return (

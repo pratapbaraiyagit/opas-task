@@ -4,6 +4,8 @@ import { validate } from '@middlewares/validate';
 import { authenticate, optionalAuthenticate } from '@middlewares/authenticate';
 import { authorize } from '@middlewares/authorize';
 import { resolveWorkspaceRole } from '@middlewares/workspaceRole';
+import { resolveBoardRole } from '@middlewares/boardRole';
+import { requireBoardEdit } from '@middlewares/requireBoardEdit';
 
 import {
   createBoard,
@@ -123,7 +125,7 @@ singleBoardRouter.use(authenticate);
  *       200:
  *         description: Board updated successfully
  */
-singleBoardRouter.patch('/:id', validate(updateBoardSchema), updateBoard);
+singleBoardRouter.patch('/:id', resolveBoardRole, authorize('editor'), validate(updateBoardSchema), updateBoard);
 
 /**
  * @swagger
@@ -143,7 +145,7 @@ singleBoardRouter.patch('/:id', validate(updateBoardSchema), updateBoard);
  *       200:
  *         description: Board deleted successfully
  */
-singleBoardRouter.delete('/:id', deleteBoard);
+singleBoardRouter.delete('/:id', resolveBoardRole, authorize('editor'), deleteBoard);
 
 /**
  * @swagger
@@ -183,7 +185,7 @@ singleBoardRouter.put('/:id/star', authenticate, toggleStar);
  *       201:
  *         description: Version saved successfully
  */
-singleBoardRouter.post('/:id/versions', authenticate, saveVersion);
+singleBoardRouter.post('/:id/versions', requireBoardEdit, saveVersion);
 
 /**
  * @swagger
@@ -228,7 +230,7 @@ singleBoardRouter.get('/:id/versions', authenticate, getVersions);
  *       200:
  *         description: Version restored successfully
  */
-singleBoardRouter.post('/:id/versions/:versionId/restore', authenticate, restoreVersion);
+singleBoardRouter.post('/:id/versions/:versionId/restore', requireBoardEdit, restoreVersion);
 
 /**
  * @swagger
@@ -260,7 +262,7 @@ singleBoardRouter.post('/:id/versions/:versionId/restore', authenticate, restore
  *       200:
  *         description: Board share settings updated
  */
-singleBoardRouter.patch('/:id/share', updateBoard); // Re-use updateBoard for sharing
+singleBoardRouter.patch('/:id/share', resolveBoardRole, authorize('editor'), validate(updateBoardSchema), updateBoard);
 
 // Workspace specific board routes (mounted at /workspaces/:id/boards)
 const workspaceBoardsRouter = Router({ mergeParams: true });

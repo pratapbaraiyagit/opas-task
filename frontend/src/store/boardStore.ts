@@ -132,44 +132,53 @@ export const useBoardStore = create<BoardState>((set) => ({
 
   toggleStar: async (id) => {
     try {
-      // Optimistic update
       const { user } = useAuthStore.getState();
       if (!user) return;
-      
-      set((state) => {
-        const isStarred = state.boards.find(b => b.id === id)?.starredBy?.includes(user.id);
-        const updateBoards = (boards: Board[]) => boards.map(b => {
+
+      const updateBoardInList = (boards: Board[], isStarred: boolean) =>
+        boards.map((b) => {
           if (b.id !== id) return b;
-          const starredBy = isStarred 
-            ? b.starredBy.filter(uid => uid !== user.id)
+          const starredBy = isStarred
+            ? b.starredBy.filter((uid) => uid !== user.id)
             : [...(b.starredBy || []), user.id];
           return { ...b, starredBy };
         });
 
+      set((state) => {
+        const existingBoard =
+          state.boards.find((b) => b.id === id) ??
+          state.recentBoards.find((b) => b.id === id) ??
+          state.starredBoards.find((b) => b.id === id);
+        const isStarred = existingBoard?.starredBy?.includes(user.id) ?? false;
+
         return {
-          boards: updateBoards(state.boards),
-          activeBoard: state.activeBoard?.id === id ? updateBoards([state.activeBoard])[0] : state.activeBoard,
+          boards: updateBoardInList(state.boards, isStarred),
+          recentBoards: updateBoardInList(state.recentBoards, isStarred),
+          starredBoards: updateBoardInList(state.starredBoards, isStarred),
+          activeBoard:
+            state.activeBoard?.id === id
+              ? updateBoardInList([state.activeBoard], isStarred)[0]
+              : state.activeBoard,
         };
       });
 
       const updated = await boardApi.toggleStar(id);
-      
-      // Update actual state and starredBoards list
+
       set((state) => {
         const isNowStarred = updated.starredBy?.includes(user.id);
-        const newStarredBoards = isNowStarred 
-          ? [...state.starredBoards.filter(b => b.id !== id), updated]
-          : state.starredBoards.filter(b => b.id !== id);
+        const newStarredBoards = isNowStarred
+          ? [...state.starredBoards.filter((b) => b.id !== id), updated]
+          : state.starredBoards.filter((b) => b.id !== id);
 
         return {
           boards: state.boards.map((b) => (b.id === id ? updated : b)),
+          recentBoards: state.recentBoards.map((b) => (b.id === id ? updated : b)),
           activeBoard: state.activeBoard?.id === id ? updated : state.activeBoard,
           starredBoards: newStarredBoards,
         };
       });
     } catch (error: any) {
       toast.error('Failed to update star');
-      // Ideally rollback optimistic update here
     }
   },
 

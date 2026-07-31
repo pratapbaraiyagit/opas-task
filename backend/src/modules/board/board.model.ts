@@ -11,6 +11,8 @@ export interface IBoard extends Document {
   isPublic: boolean;
   publicRole: 'VIEWER' | 'EDITOR';
   publicExpiresAt?: Date;
+  shapes: any[];
+  notesYjsState?: Buffer;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,6 +61,14 @@ const boardSchema = new Schema<IBoard>(
     },
     publicExpiresAt: {
       type: Date,
+    },
+    shapes: {
+      type: Schema.Types.Mixed,
+      default: [],
+    },
+    notesYjsState: {
+      type: Buffer,
+      default: null,
     },
   },
   {

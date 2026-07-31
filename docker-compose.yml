@@ -1,11 +1,13 @@
 version: '3.8'
 
 services:
-  # The frontend React application served via Nginx
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+        VITE_SOCKET_URL: ''
     ports:
       - "80:80"
     depends_on:
@@ -14,7 +16,6 @@ services:
       - opas-network
     restart: unless-stopped
 
-  # The backend Node.js API and Socket.IO server
   backend:
     build:
       context: ./backend
@@ -25,9 +26,11 @@ services:
       - NODE_ENV=production
       - PORT=5001
       - MONGODB_URI=mongodb://mongodb:27017/opas
-      - REDIS_URL=redis://redis:6379
-      - JWT_ACCESS_SECRET=your_super_secret_access_key_here
-      - JWT_REFRESH_SECRET=your_super_secret_refresh_key_here
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - JWT_ACCESS_SECRET=your_super_secret_access_key_here_32c
+      - JWT_REFRESH_SECRET=your_super_secret_refresh_key_here_32
       - CLIENT_URL=http://localhost
     depends_on:
       mongodb:
@@ -38,7 +41,6 @@ services:
       - opas-network
     restart: unless-stopped
 
-  # MongoDB Database
   mongodb:
     image: mongo:6.0
     ports:
@@ -49,7 +51,6 @@ services:
       - opas-network
     restart: unless-stopped
 
-  # Redis for Socket.IO scaling
   redis:
     image: redis:7.2-alpine
     ports:
@@ -60,12 +61,10 @@ services:
       - opas-network
     restart: unless-stopped
 
-# Named volumes for data persistence
 volumes:
   mongodb-data:
   redis-data:
 
-# Internal network for the services to communicate
 networks:
   opas-network:
     driver: bridge

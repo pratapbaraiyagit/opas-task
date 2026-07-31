@@ -85,6 +85,60 @@ export class BoardRepository {
     );
   }
 
+  async addShape(boardId: string, shape: Record<string, unknown>): Promise<void> {
+    await Board.updateOne(
+      { _id: new Types.ObjectId(boardId) },
+      { $push: { shapes: shape } },
+    );
+  }
+
+  async updateShapeInCanvas(
+    boardId: string,
+    shapeId: string,
+    attrs: Record<string, unknown>,
+  ): Promise<void> {
+    const board = await Board.findById(boardId);
+    if (!board) return;
+
+    const shapes = board.shapes.map((shape) => {
+      const s = shape as { id?: string };
+      return s.id === shapeId ? { ...shape, ...attrs } : shape;
+    });
+
+    await Board.updateOne({ _id: new Types.ObjectId(boardId) }, { $set: { shapes } });
+  }
+
+  async deleteShapesFromCanvas(boardId: string, shapeIds: string[]): Promise<void> {
+    const board = await Board.findById(boardId);
+    if (!board) return;
+
+    const shapes = board.shapes.filter((shape) => {
+      const s = shape as { id?: string };
+      return !shapeIds.includes(s.id ?? '');
+    });
+
+    await Board.updateOne({ _id: new Types.ObjectId(boardId) }, { $set: { shapes } });
+  }
+
+  async setShapes(boardId: string, shapes: Record<string, unknown>[]): Promise<void> {
+    await Board.updateOne(
+      { _id: new Types.ObjectId(boardId) },
+      { $set: { shapes } },
+    );
+  }
+
+  async updateNotesState(boardId: string, state: Buffer): Promise<void> {
+    await Board.updateOne(
+      { _id: new Types.ObjectId(boardId) },
+      { $set: { notesYjsState: state } },
+    );
+  }
+
+  async getNotesState(boardId: string): Promise<Buffer | null> {
+    const board = await Board.findById(boardId).select('notesYjsState');
+    return board?.notesYjsState ?? null;
+  }
+
   async saveVersion(boardId: string, userId: string, versionName: string, shapes: any[]): Promise<IBoardVersion> {
     const version = new BoardVersion({
       boardId: new Types.ObjectId(boardId),

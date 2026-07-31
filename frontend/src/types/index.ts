@@ -35,6 +35,10 @@ export interface Board {
   createdBy: User;
   isPublic: boolean;
   publicRole: 'VIEWER' | 'EDITOR';
+  publicExpiresAt?: string | null;
+  shapes?: CanvasObject[];
+  canEdit?: boolean;
+  canView?: boolean;
   createdAt: string;
   updatedAt: string;
 }
