@@ -3,6 +3,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
 import * as Y from 'yjs';
+import { Socket } from 'socket.io-client';
 import { X, Bold, Italic, List, ListOrdered, Download, Sparkles } from 'lucide-react';
 import { cn } from '@utils/index';
 import { getSocket } from '../../../api/socket';
@@ -16,6 +17,21 @@ interface MeetingNotesProps {
   onClose: () => void;
 }
 
+type YjsUpdatePayload = { boardId: string; update: number[] } | number[];
+type YjsSyncPayload = { boardId: string; state: number[] } | number[];
+
+const getUpdateFromPayload = (payload: YjsUpdatePayload): number[] =>
+  Array.isArray(payload) ? payload : payload.update;
+
+const getSyncStateFromPayload = (payload: YjsSyncPayload): number[] =>
+  Array.isArray(payload) ? payload : payload.state;
+
+const getBoardIdFromUpdatePayload = (payload: YjsUpdatePayload, fallback: string): string =>
+  Array.isArray(payload) ? fallback : payload.boardId;
+
+const getBoardIdFromSyncPayload = (payload: YjsSyncPayload, fallback: string): string =>
+  Array.isArray(payload) ? fallback : payload.boardId;
+
 export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, readOnly = false, onClose }) => {
   const [ydocState, setYdocState] = useState<{ ydoc: Y.Doc } | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -23,38 +39,84 @@ export const MeetingNotes: React.FC<MeetingNotesProps> = ({ boardId, isOpen, rea
   useEffect(() => {
     const doc = new Y.Doc();
     setYdocState({ ydoc: doc });
-    
-    const socket = getSocket();
-    if (!socket) return;
-    
-    // Listen for local changes and send them to the server
+
+    let attachedSocket: Socket | null = null;
+
     const handleUpdate = (update: Uint8Array, origin: unknown) => {
-      if (readOnly) return;
+      if (readOnly || !attachedSocket) return;
       if (origin !== 'remote') {
-        socket.emit('yjs:update', { boardId, update: Array.from(update) });
+        attachedSocket.emit('yjs:update', { boardId, update: Array.from(update) });
       }
     };
-    
-    // Listen for remote changes from the server
-    const handleRemoteUpdate = (updateArray: number[]) => {
-      Y.applyUpdate(doc, new Uint8Array(updateArray), 'remote');
+
+    const handleRemoteUpdate = (payload: YjsUpdatePayload) => {
+      if (getBoardIdFromUpdatePayload(payload, boardId) !== boardId) return;
+      Y.applyUpdate(doc, new Uint8Array(getUpdateFromPayload(payload)), 'remote');
     };
 
-    const handleSync = (stateArray: number[]) => {
-      Y.applyUpdate(doc, new Uint8Array(stateArray), 'remote');
+    const handleSync = (payload: YjsSyncPayload) => {
+      if (getBoardIdFromSyncPayload(payload, boardId) !== boardId) return;
+      const state = getSyncStateFromPayload(payload);
+      if (!state.length) return;
+      Y.applyUpdate(doc, new Uint8Array(state), 'remote');
     };
-    
-    doc.on('update', handleUpdate);
-    socket.on('yjs:update', handleRemoteUpdate);
-    socket.on('yjs:sync', handleSync);
-    
+
+    const attachToSocket = (socket: Socket) => {
+      if (attachedSocket && attachedSocket !== socket) {
+        attachedSocket.off('yjs:update', handleRemoteUpdate);
+        attachedSocket.off('yjs:sync', handleSync);
+        doc.off('update', handleUpdate);
+      }
+
+      if (attachedSocket !== socket) {
+        attachedSocket = socket;
+        doc.on('update', handleUpdate);
+        socket.on('yjs:update', handleRemoteUpdate);
+        socket.on('yjs:sync', handleSync);
+      }
+
+      socket.emit('notes:request_sync', boardId);
+    };
+
+    const tryAttach = () => {
+      const socket = getSocket();
+      if (socket?.connected) {
+        attachToSocket(socket);
+        return true;
+      }
+      return false;
+    };
+
+    const pollId = window.setInterval(() => {
+      if (!attachedSocket) {
+        tryAttach();
+      }
+    }, 200);
+
+    const existingSocket = getSocket();
+    const onConnect = () => tryAttach();
+    existingSocket?.on('connect', onConnect);
+    tryAttach();
+
     return () => {
+      window.clearInterval(pollId);
+      existingSocket?.off('connect', onConnect);
+      if (attachedSocket) {
+        attachedSocket.off('yjs:update', handleRemoteUpdate);
+        attachedSocket.off('yjs:sync', handleSync);
+      }
       doc.off('update', handleUpdate);
-      socket.off('yjs:update', handleRemoteUpdate);
-      socket.off('yjs:sync', handleSync);
       doc.destroy();
     };
   }, [boardId, readOnly]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const socket = getSocket();
+    if (socket?.connected) {
+      socket.emit('notes:request_sync', boardId);
+    }
+  }, [isOpen, boardId]);
 
   const editor = useEditor({
     editable: !readOnly,

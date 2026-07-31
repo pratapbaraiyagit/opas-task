@@ -93,10 +93,22 @@ export const initializeSocket = async (httpServer: HttpServer): Promise<Server> 
 
       const notesState = await getNotesStateArray(boardId);
       if (notesState.length > 0) {
-        socket.emit('yjs:sync', notesState);
+        socket.emit('yjs:sync', { boardId, state: notesState });
       }
 
       logger.info(`Socket ${socket.id} joined board ${boardId}`);
+    });
+
+    socket.on('notes:request_sync', async (boardId: string) => {
+      const allowed = await authorizeBoardEvent(socket, boardId, false);
+      if (!allowed) {
+        return;
+      }
+
+      const notesState = await getNotesStateArray(boardId);
+      if (notesState.length > 0) {
+        socket.emit('yjs:sync', { boardId, state: notesState });
+      }
     });
 
     socket.on('leave_board', async (boardId: string) => {
@@ -164,7 +176,7 @@ export const initializeSocket = async (httpServer: HttpServer): Promise<Server> 
         return;
       }
       await applyNotesUpdate(boardId, update);
-      socket.to(boardId).emit('yjs:update', update);
+      socket.to(boardId).emit('yjs:update', { boardId, update });
     });
 
     socket.on('disconnect', () => {
