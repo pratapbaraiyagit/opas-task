@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { isAxiosError } from 'axios';
 import toast from 'react-hot-toast';
 import { LogIn } from 'lucide-react';
 
@@ -14,6 +15,7 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -24,12 +26,17 @@ export const LoginPage: React.FC = () => {
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    setServerError(null);
+
     try {
       await login(data);
       toast.success('Successfully logged in');
       navigate(from, { replace: true });
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to login');
+    } catch (error: unknown) {
+      const message = isAxiosError(error)
+        ? error.response?.data?.message || 'Failed to login'
+        : 'Failed to login';
+      setServerError(message);
     }
   };
 
@@ -39,6 +46,15 @@ export const LoginPage: React.FC = () => {
         <h2 className="text-3xl font-bold text-surface-900 dark:text-white">Welcome back</h2>
         <p className="text-surface-500 mt-2">Please enter your details to sign in.</p>
       </div>
+
+      {serverError && (
+        <div
+          role="alert"
+          className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-300"
+        >
+          {serverError}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Input

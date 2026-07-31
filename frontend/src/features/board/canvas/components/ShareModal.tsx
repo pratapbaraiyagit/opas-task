@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { isAxiosError } from 'axios';
+import toast from 'react-hot-toast';
 import { X, Copy, Check, Globe } from 'lucide-react';
 import { Button } from '@components/ui';
 import { Board } from '../../../../types';
@@ -35,6 +37,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({ board, isOpen, onClose, 
       const response = await api.patch(`/boards/${board.id}/share`, updates);
       onUpdate(response.data.data);
     } catch (err) {
+      const message = isAxiosError(err)
+        ? err.response?.data?.message || 'Failed to update share settings'
+        : 'Failed to update share settings';
+      toast.error(message);
       console.error('Failed to update share settings', err);
     } finally {
       setIsLoading(false);

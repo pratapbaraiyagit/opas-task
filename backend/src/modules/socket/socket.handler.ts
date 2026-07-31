@@ -3,7 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import jwt from 'jsonwebtoken';
 
-import { env } from '@config/env';
+import { env, getClientOrigins } from '@config/env';
 import { getRedisPublisher, getRedisSubscriber } from '@config/redis';
 import { getBoardAccess } from '@services/boardAccess.service';
 import { applyNotesUpdate, getNotesStateArray } from '@services/notes.service';
@@ -45,7 +45,7 @@ const authorizeBoardEvent = async (
 export const initializeSocket = async (httpServer: HttpServer): Promise<Server> => {
   const io = new Server(httpServer, {
     cors: {
-      origin: env.CLIENT_URL || 'http://localhost:5173',
+      origin: getClientOrigins(),
       methods: ['GET', 'POST'],
       credentials: true,
     },

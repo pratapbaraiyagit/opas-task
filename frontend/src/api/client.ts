@@ -28,6 +28,19 @@ const processQueue = (error: AxiosError | null) => {
   failedQueue = [];
 };
 
+const AUTH_NO_REFRESH_PATHS = [
+  '/auth/login',
+  '/auth/signup',
+  '/auth/refresh',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
+
+const shouldSkipTokenRefresh = (url?: string) => {
+  if (!url) return false;
+  return AUTH_NO_REFRESH_PATHS.some((path) => url.includes(path));
+};
+
 // Request interceptor — attach access token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -46,8 +59,12 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // If 401 and not already retrying
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // If 401 and not already retrying (skip auth routes like login)
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !shouldSkipTokenRefresh(originalRequest.url)
+    ) {
       if (isRefreshing) {
         // Queue the request while refresh is in progress
         return new Promise((resolve, reject) => {

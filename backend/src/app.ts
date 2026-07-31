@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 
-import { env } from '@config/env';
+import { getClientOrigins } from '@config/env';
 import { swaggerSpec } from '@config/swagger';
 import { errorHandler } from '@middlewares/errorHandler';
 import { notFoundHandler } from '@middlewares/notFound';
@@ -20,9 +20,17 @@ app.use(
   }),
 );
 
+const allowedOrigins = getClientOrigins();
+
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
